@@ -1,0 +1,5 @@
+#pragma once
+
+/* This file is processed by CMake */
+#cmakedefine CALC_INTERSECTIONS_FILE "${CALC_INTERSECTIONS_FILE}"
+
