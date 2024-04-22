@@ -24,7 +24,6 @@ TEST_CASE("getWSIdx") {
     std::ifstream sa_strm(SA_WS_FILE);
     double protonCharge, protonChargeBkgd;
     sa_strm >> protonCharge >> protonChargeBkgd;
-    std::cout << protonCharge << " " << protonChargeBkgd << std::endl;
     size_t sa_size;
     sa_strm >> sa_size;
     for(size_t i = 0; i < sa_size;++i)
@@ -74,15 +73,29 @@ TEST_CASE("getWSIdx") {
 
       // Get solid angle for this contribution
       double solid = protonCharge;
-      // [Task 89]
       double bkgdSolid = protonChargeBkgd;
       if (haveSA) {
-        double solid_angle_factor = solidAngleWS[solidAngDetToIdx.find(detID)->second][0];
-        //  solidAngleWS->y(solidAngDetToIdx.find(detID)->second)[0]
+        double solid_angle_factor = solidAngleWS[solidAngDetToIdx.find(detID)->second][0]; 
         solid *= solid_angle_factor;
-        // [Task 89]
         bkgdSolid *= solid_angle_factor;
       }
+
+      if(sa_strm.eof())
+        continue;
+
+      auto asdf = sa_strm.tellg();
+      double solid_verify, bkgdSolid_verify;
+      sa_strm >> i_verify >> solid_verify >> bkgdSolid_verify;
+      if(i == i_verify)
+      {
+        REQUIRE_THAT(solid, Catch::Matchers::WithinAbs(solid_verify, 20));
+        REQUIRE_THAT(bkgdSolid, Catch::Matchers::WithinAbs(bkgdSolid_verify,0.0001));
+      }
+      else
+      {
+        sa_strm.seekg(asdf);
+      }
+
     }
   }
 }
