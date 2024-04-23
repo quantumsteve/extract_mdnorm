@@ -95,7 +95,6 @@ TEST_CASE("getWSIdx") {
       {
         sa_strm.seekg(asdf);
       }
-
     }
   }
 }

@@ -35,6 +35,7 @@ set( destination_path "${CMAKE_SOURCE_DIR}/${destination_name}" )
 set( CALC_INTERSECTIONS_FILE "${CMAKE_SOURCE_DIR}/data/corelli_demo.txt")
 set( FLUXDET_TO_IDX_FILE "${CMAKE_SOURCE_DIR}/data/fluxDetToIdx.txt")
 set( SA_WS_FILE "${CMAKE_SOURCE_DIR}/data/solidAngDetToIdx.txt")
+set( FLUXWS_FILE "${CMAKE_SOURCE_DIR}/data/integrFlux.txt")
 configure_file( ${source_path} ${destination_path} )
 
 add_executable(calculateIntersections-test src/calculateIntersections.cpp src/calculateIntersections-test.cpp)
@@ -43,11 +44,14 @@ target_link_libraries(calculateIntersections-test Eigen3::Eigen Catch2::Catch2Wi
 add_executable(wsIdx-test src/wsIdx-test.cpp)
 target_link_libraries(wsIdx-test Catch2::Catch2WithMain)
 
+add_executable(calcDiffractionIntersectionIntegral-test src/calcSingleDetectorNorm.cpp src/calculateIntersections.cpp  src/calcDiffractionIntersectionIntegral.cpp src/calcDiffractionIntersectionIntegral-test.cpp)
+target_link_libraries(calcDiffractionIntersectionIntegral-test Eigen3::Eigen Catch2::Catch2WithMain)
+
 include( CTest )
 
 enable_testing()
 
 add_test( NAME calculateIntersections COMMAND calculateIntersections-test )
+add_test( NAME calcDiffractionIntersectionIntegral COMMAND calcDiffractionIntersectionIntegral-test )
 add_test( NAME wsIdx COMMAND wsIdx-test )
-
 

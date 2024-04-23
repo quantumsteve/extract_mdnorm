@@ -1,0 +1,184 @@
+#include "calculateIntersections.h"
+#include "calcDiffractionIntersectionIntegral.h"
+#include "calcSingleDetectorNorm.h"
+
+#include "validation_data_filepath.h"
+#include "catch2/catch_all.hpp"
+
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <vector>
+
+TEST_CASE("calculateIntersections") {
+  SECTION("t0") {
+    std::vector<double> hX(201), kX(201);
+    for(int i = 0; i < 201; ++i)
+    {
+      hX[i] = kX[i] =  0.1 * static_cast<double>(i) - 10.;
+    }
+    std::vector<double> lX{-0.1, 0.1};
+
+    MDNorm doctest(hX, kX, lX);
+    
+    std::ifstream istrm(CALC_INTERSECTIONS_FILE);
+
+    Eigen::Matrix3d transform;
+    istrm >> transform(0,0) >> transform(0,1) >> transform(0,2) 
+	        >> transform(1,0) >> transform(1,1) >> transform(1,2)
+	        >> transform(2,0) >> transform(2,1) >> transform(2,2);
+
+    size_t ndets;
+    istrm >> ndets;
+
+    std::ifstream flux_strm(FLUXDET_TO_IDX_FILE);
+    std::unordered_map<int32_t, size_t> fluxDetToIdx;
+    std::unordered_map<int32_t, size_t> solidAngDetToIdx;
+    size_t ndets_verify;
+    flux_strm >> ndets_verify;
+
+    REQUIRE(ndets == ndets_verify);
+
+    for(size_t i = 0; i < ndets;++i)
+    {
+        int32_t first;
+        size_t second;
+        flux_strm >> first >> second;
+        fluxDetToIdx.emplace(first, second);
+    }
+
+    std::ifstream sa_strm(SA_WS_FILE);
+    double protonCharge, protonChargeBkgd;
+    sa_strm >> protonCharge >> protonChargeBkgd;
+    size_t sa_size;
+    sa_strm >> sa_size;
+    for(size_t i = 0; i < sa_size;++i)
+    {
+        int32_t first;
+        size_t second;
+        sa_strm >> first >> second;
+        solidAngDetToIdx.emplace(first, second);
+    }
+
+    std::vector<std::vector<double>> solidAngleWS; 
+    size_t sa_row, sa_col;
+    sa_strm >> sa_row >> sa_col;
+    for(size_t i = 0; i < sa_row; ++i)
+    {
+      REQUIRE(sa_col == 1);
+      double value;
+      sa_strm >> value;
+      solidAngleWS.push_back({value});
+    }
+
+    flux_strm >> ndets_verify;
+    REQUIRE(ndets == ndets_verify); 
+
+    bool haveSA{true};
+
+    std::ifstream integrFlux_strm(FLUXWS_FILE);
+    std::vector<std::vector<double>> integrFlux_x{1}, integrFlux_y{1};
+    size_t flux_row, flux_col;
+    integrFlux_strm >> flux_row >> flux_col;
+    REQUIRE(flux_row == 1);
+    for(size_t j = 0; j < flux_col; ++j)
+    {
+      double value;
+      integrFlux_strm >> value;
+      integrFlux_x[0].push_back(value);
+    }
+
+    integrFlux_strm >> flux_row >> flux_col;
+    REQUIRE(flux_row == 1);
+    for(size_t j = 0; j < flux_col; ++j)
+    {
+      double value;
+      integrFlux_strm >> value;
+      integrFlux_y[0].push_back(value);
+    }
+    integrFlux_strm.close();
+
+    std::vector<std::atomic<double>> signalArray(200*200);
+    std::vector<std::atomic<double>> bkgdSignalArray(200*200);
+
+    std::vector<std::array<double, 4>> intersections;
+    std::vector<double> xValues, yValues;
+    std::vector<float> pos, posNew;
+    const size_t vmdDims =  3;
+    for(size_t i = 0; i < ndets; ++i)
+    {
+      size_t i_verify;
+      int32_t detID;
+      size_t wsIdx_verify;
+      flux_strm >> i_verify >> detID >> wsIdx_verify;
+      if(i != i_verify)
+      {
+        REQUIRE(i < i_verify);
+        i = i_verify;
+      }
+
+      // get the flux spectrum number: this is for diffraction only!
+      size_t wsIdx = 0;
+      if (auto index = fluxDetToIdx.find(detID); index != fluxDetToIdx.end())
+        wsIdx = index->second;
+      else // masked detector in flux, but not in input workspace
+        continue;
+
+      REQUIRE(wsIdx == wsIdx_verify);
+
+      size_t i_f, num_intersections;
+      double theta, phi, lowvalue, highvalue;     
+      istrm >> i_f >> theta >> phi >> lowvalue >> highvalue;
+      if(i != i_f)
+        i = i_f;
+      doctest.calculateIntersections(intersections, theta, phi, transform, lowvalue, highvalue);
+      istrm >> num_intersections;
+      REQUIRE(intersections.size() == num_intersections);
+      for(auto & elem: intersections) {
+        std::array<double, 4> values;
+        istrm >> values[0] >> values[1] >> values[2] >> values[3];
+        for(int j = 0; j < 4; ++j)
+          REQUIRE_THAT(elem[j], Catch::Matchers::WithinAbs(values[j], 0.0001));
+      }
+
+      if(intersections.empty())
+        continue;
+
+      // Get solid angle for this contribution
+      double solid = protonCharge;
+      double bkgdSolid = protonChargeBkgd;
+      if (haveSA) {
+        double solid_angle_factor = solidAngleWS[solidAngDetToIdx.find(detID)->second][0]; 
+        solid *= solid_angle_factor;
+        bkgdSolid *= solid_angle_factor;
+      }
+
+      if(sa_strm.eof())
+        continue;
+
+      auto asdf = sa_strm.tellg();
+      double solid_verify, bkgdSolid_verify;
+      sa_strm >> i_verify >> solid_verify >> bkgdSolid_verify;
+      if(i == i_verify)
+      {
+        REQUIRE_THAT(solid, Catch::Matchers::WithinAbs(solid_verify, 20));
+        REQUIRE_THAT(bkgdSolid, Catch::Matchers::WithinAbs(bkgdSolid_verify,0.0001));
+      }
+      else
+      {
+        sa_strm.seekg(asdf);
+      }
+
+      calcDiffractionIntersectionIntegral(intersections, xValues, yValues, integrFlux_x, integrFlux_y, wsIdx);
+
+      pos.resize(vmdDims);
+      posNew.resize(vmdDims);
+
+      calcSingleDetectorNorm(intersections, solid, yValues, vmdDims, pos, posNew, signalArray, bkgdSolid, bkgdSignalArray);
+    }
+
+    std::ofstream out_strm("meow.txt");
+    for(size_t i = 0; i < signalArray.size();++i)
+      out_strm << signalArray[i] << '\n';    
+  }
+}
