@@ -1,0 +1,10 @@
+
+# typical build directories and artifacts
+build
+/build*/
+compile_commands.json
+
+# ignore vscode
+.vscode
+.cache
+.clangd
