@@ -5,6 +5,8 @@
 #include "validation_data_filepath.h"
 #include "catch2/catch_all.hpp"
 
+#include <highfive/highfive.hpp>
+
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -76,27 +78,33 @@ TEST_CASE("calculateIntersections") {
 
     bool haveSA{true};
 
-    std::ifstream integrFlux_strm(FLUXWS_FILE);
+
+
+    HighFive::File file(FLUX_NXS, HighFive::File::ReadOnly);
+    HighFive::Group group = file.getGroup("mantid_workspace_1");
+    HighFive::Group group2 = group.getGroup("workspace");
+    HighFive::DataSet dataset = group2.getDataSet("axis1");
+    std::vector<size_t> dims = dataset.getDimensions();
+    std::vector<double> read_data;
+    dataset.read(read_data);
+
     std::vector<std::vector<double>> integrFlux_x{1}, integrFlux_y{1};
-    size_t flux_row, flux_col;
-    integrFlux_strm >> flux_row >> flux_col;
-    REQUIRE(flux_row == 1);
-    for(size_t j = 0; j < flux_col; ++j)
+
+    REQUIRE(dims[1] == 0);
+    for(size_t j = 0; j < dims[0]; ++j)
     {
-      double value;
-      integrFlux_strm >> value;
-      integrFlux_x[0].push_back(value);
+      integrFlux_x[0].push_back(read_data[j]);
     }
 
-    integrFlux_strm >> flux_row >> flux_col;
-    REQUIRE(flux_row == 1);
-    for(size_t j = 0; j < flux_col; ++j)
+    dataset = group2.getDataSet("values");
+    dims = dataset.getDimensions();
+    dataset.read(read_data);
+
+    REQUIRE(dims[0] == 1);
+    for(size_t j = 0; j < dims[1]; ++j)
     {
-      double value;
-      integrFlux_strm >> value;
-      integrFlux_y[0].push_back(value);
+      integrFlux_y[0].push_back(read_data[j]);
     }
-    integrFlux_strm.close();
 
     std::vector<std::atomic<double>> signalArray(200*200);
     std::vector<std::atomic<double>> bkgdSignalArray(200*200);
@@ -123,7 +131,6 @@ TEST_CASE("calculateIntersections") {
         wsIdx = index->second;
       else // masked detector in flux, but not in input workspace
         continue;
-
       REQUIRE(wsIdx == wsIdx_verify);
 
       size_t i_f, num_intersections;

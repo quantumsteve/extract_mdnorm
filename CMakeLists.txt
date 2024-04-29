@@ -27,6 +27,20 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 include( CMake/catch.cmake )
 
 find_package(Eigen3 REQUIRED)
+find_package(HDF5 REQUIRED)
+
+set(HIGHFIVE_GIT_REPOSITORY https://github.com/BlueBrain/HighFive.git)
+set(HIGHFIVE_GIT_TAG v2.9.0)
+set(HIGHFIVE_USE_BOOST OFF)
+set(HIGHFIVE_USE_EIGEN ON)
+
+include(FetchContent)
+FetchContent_Declare(HighFive
+  GIT_REPOSITORY ${HIGHFIVE_GIT_REPOSITORY}
+  GIT_TAG ${HIGHFIVE_GIT_TAG}
+)
+FetchContent_MakeAvailable(HighFive)
+
 # header containing all the filepaths as preprocessor defines
 set( source_name "src/validation_data_filepath.h.in" )
 set( source_path "${CMAKE_SOURCE_DIR}/${source_name}" )
@@ -35,7 +49,7 @@ set( destination_path "${CMAKE_SOURCE_DIR}/${destination_name}" )
 set( CALC_INTERSECTIONS_FILE "${CMAKE_SOURCE_DIR}/data/corelli_demo.txt")
 set( FLUXDET_TO_IDX_FILE "${CMAKE_SOURCE_DIR}/data/fluxDetToIdx.txt")
 set( SA_WS_FILE "${CMAKE_SOURCE_DIR}/data/solidAngDetToIdx.txt")
-set( FLUXWS_FILE "${CMAKE_SOURCE_DIR}/data/integrFlux.txt")
+set( FLUX_NXS "${CMAKE_SOURCE_DIR}/data/SingleCrystalDiffuseReduction_Flux.nxs")
 configure_file( ${source_path} ${destination_path} )
 
 add_executable(calculateIntersections-test src/calculateIntersections.cpp src/calculateIntersections-test.cpp)
@@ -44,8 +58,12 @@ target_link_libraries(calculateIntersections-test Eigen3::Eigen Catch2::Catch2Wi
 add_executable(wsIdx-test src/wsIdx-test.cpp)
 target_link_libraries(wsIdx-test Catch2::Catch2WithMain)
 
-add_executable(calcDiffractionIntersectionIntegral-test src/calcSingleDetectorNorm.cpp src/calculateIntersections.cpp  src/calcDiffractionIntersectionIntegral.cpp src/calcDiffractionIntersectionIntegral-test.cpp)
-target_link_libraries(calcDiffractionIntersectionIntegral-test Eigen3::Eigen Catch2::Catch2WithMain)
+add_executable(calcDiffractionIntersectionIntegral-test src/calcSingleDetectorNorm.cpp
+                                                        src/calculateIntersections.cpp
+                                                        src/calcDiffractionIntersectionIntegral.cpp
+                                                        src/calcDiffractionIntersectionIntegral-test.cpp )
+
+target_link_libraries(calcDiffractionIntersectionIntegral-test HighFive Eigen3::Eigen Catch2::Catch2WithMain)
 
 include( CTest )
 
