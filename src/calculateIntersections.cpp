@@ -125,5 +125,5 @@ void MDNorm::calculateIntersections(std::vector<std::array<double, 4>> &intersec
   }
 
   // sort intersections by final momentum
-  std::stable_sort(intersections.begin(), intersections.end(), compareMomentum);
+  std::sort(intersections.begin(), intersections.end(), compareMomentum);
 }

@@ -110,46 +110,85 @@ TEST_CASE("calculateIntersections") {
     for(size_t j = 0; j < dims[1]; ++j)
       integrFlux_y[0].push_back(read_data[j]);
 
+    std::vector<bool> use_dets;
+    std::ifstream dets_strm(USE_DETS_FILE);
+    for(size_t i = 0;i < ndets;++i) {
+      REQUIRE(!dets_strm.eof());
+      bool value{0};
+      dets_strm >> value;
+      REQUIRE(value == true);
+      use_dets.push_back(value);
+    }
+
+    std::vector<double> lowValues, highValues;
+
+    HighFive::File event_file(EVENT_NXS, HighFive::File::ReadOnly);
+    HighFive::Group event_group = event_file.getGroup("MDEventWorkspace");
+    HighFive::Group event_group2 = event_group.getGroup("experiment0");
+    HighFive::Group event_group3 = event_group2.getGroup("logs");
+    HighFive::Group event_group4 = event_group3.getGroup("MDNorm_low");
+    dataset = event_group4.getDataSet("value");
+    dims = dataset.getDimensions();
+    REQUIRE(dims.size() == 1);
+    REQUIRE(dims[0] == 372736);
+    dataset.read(lowValues);
+    event_group4 = event_group3.getGroup("MDNorm_high");
+    dataset = event_group4.getDataSet("value");
+    dims = dataset.getDimensions();
+    REQUIRE(dims.size() == 1);
+    REQUIRE(dims[0] == 372736);
+    dataset.read(highValues);
+
+    std::vector<double> thetaValues, phiValues;
+    event_group3 = event_group2.getGroup("instrument");
+    event_group4 = event_group3.getGroup("physical_detectors");
+    dataset = event_group4.getDataSet("polar_angle");
+    dims = dataset.getDimensions();
+    REQUIRE(dims.size() == 1);
+    REQUIRE(dims[0] == 372736);
+    dataset.read(thetaValues);
+
+    for(auto &value : thetaValues)
+      value = value * M_PI/180.;
+
+    dataset = event_group4.getDataSet("azimuthal_angle");
+    dims = dataset.getDimensions();
+    REQUIRE(dims.size() == 1);
+    REQUIRE(dims[0] == 372736);
+    dataset.read(phiValues);
+
+    for(auto &value: phiValues)
+      value = value * M_PI/180.;
+
+    std::vector<int> detIDs;
+    dataset = event_group4.getDataSet("detector_number");
+    dims = dataset.getDimensions();
+    REQUIRE(dims.size() == 1);
+    REQUIRE(dims[0] == 372736);
+    dataset.read(detIDs);
+
     std::vector<std::atomic<double>> signalArray(200*200);
 
     std::vector<std::array<double, 4>> intersections;
     std::vector<double> xValues, yValues;
     std::vector<float> pos, posNew;
     const size_t vmdDims =  3;
+
+    #pragma omp parallel for private(intersections, xValues, yValues, pos, posNew)
     for(size_t i = 0; i < ndets; ++i)
     {
-      size_t i_verify;
-      int32_t detID;
-      size_t wsIdx_verify;
-      flux_strm >> i_verify >> detID >> wsIdx_verify;
-      if(i != i_verify)
-      {
-        REQUIRE(i < i_verify);
-        i = i_verify;
-      }
+      if(!use_dets[i])
+        continue;
 
+      int32_t detID = detIDs[i];
       // get the flux spectrum number: this is for diffraction only!
       size_t wsIdx = 0;
       if (auto index = fluxDetToIdx.find(detID); index != fluxDetToIdx.end())
         wsIdx = index->second;
       else // masked detector in flux, but not in input workspace
         continue;
-      REQUIRE(wsIdx == wsIdx_verify);
 
-      size_t i_f, num_intersections;
-      double theta, phi, lowvalue, highvalue;     
-      istrm >> i_f >> theta >> phi >> lowvalue >> highvalue;
-      if(i != i_f)
-        i = i_f;
-      doctest.calculateIntersections(intersections, theta, phi, transform, lowvalue, highvalue);
-      istrm >> num_intersections;
-      REQUIRE(intersections.size() == num_intersections);
-      for(auto & elem: intersections) {
-        std::array<double, 4> values;
-        istrm >> values[0] >> values[1] >> values[2] >> values[3];
-        for(int j = 0; j < 4; ++j)
-          REQUIRE_THAT(elem[j], Catch::Matchers::WithinAbs(values[j], 0.0001));
-      }
+      doctest.calculateIntersections(intersections, thetaValues[i], phiValues[i], transform, lowValues[i], highValues[i]);
 
       if(intersections.empty())
         continue;

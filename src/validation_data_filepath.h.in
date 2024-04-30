@@ -4,6 +4,7 @@
 #cmakedefine CALC_INTERSECTIONS_FILE "${CALC_INTERSECTIONS_FILE}"
 #cmakedefine FLUXDET_TO_IDX_FILE "${FLUXDET_TO_IDX_FILE}"
 #cmakedefine SA_WS_FILE "${SA_WS_FILE}"
+#cmakedefine USE_DETS_FILE "${USE_DETS_FILE}"
 #cmakedefine FLUX_NXS "${FLUX_NXS}"
 #cmakedefine SA_NXS "${SA_NXS}"
 #cmakedefine EVENT_NXS "${EVENT_NXS}"

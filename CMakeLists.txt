@@ -28,7 +28,7 @@ include( CMake/catch.cmake )
 
 find_package(Eigen3 REQUIRED)
 find_package(HDF5 REQUIRED)
-
+find_package(OpenMP REQUIRED)
 set(HIGHFIVE_GIT_REPOSITORY https://github.com/BlueBrain/HighFive.git)
 set(HIGHFIVE_GIT_TAG v2.9.0)
 set(HIGHFIVE_USE_BOOST OFF)
@@ -53,6 +53,7 @@ set( FLUX_NXS "${CMAKE_SOURCE_DIR}/data/SingleCrystalDiffuseReduction_Flux.nxs" 
 set( SA_NXS "${CMAKE_SOURCE_DIR}/data/SingleCrystalDiffuseReduction_SA.nxs" )
 set( EVENT_NXS "${CMAKE_SOURCE_DIR}/data/CORELLI_29782_Before_MDNorm.nxs" )
 set( NORM_NXS "${CMAKE_SOURCE_DIR}/data/CORELLI_29782_After_MDNorm.nxs" )
+set( USE_DETS_FILE "${CMAKE_SOURCE_DIR}/data/use_dets.txt")
 configure_file( ${source_path} ${destination_path} )
 
 add_executable(calculateIntersections-test src/calculateIntersections.cpp src/calculateIntersections-test.cpp)
@@ -66,7 +67,7 @@ add_executable(calcDiffractionIntersectionIntegral-test src/calcSingleDetectorNo
                                                         src/calcDiffractionIntersectionIntegral.cpp
                                                         src/calcDiffractionIntersectionIntegral-test.cpp )
 
-target_link_libraries(calcDiffractionIntersectionIntegral-test HighFive Eigen3::Eigen Catch2::Catch2WithMain)
+target_link_libraries(calcDiffractionIntersectionIntegral-test HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
 
 include( CTest )
 
