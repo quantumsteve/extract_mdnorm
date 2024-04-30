@@ -114,7 +114,7 @@ TEST_CASE("calculateIntersections") {
     std::ifstream dets_strm(USE_DETS_FILE);
     for(size_t i = 0;i < ndets;++i) {
       REQUIRE(!dets_strm.eof());
-      bool value{0};
+      bool value{false};
       dets_strm >> value;
       REQUIRE(value == true);
       use_dets.push_back(value);
