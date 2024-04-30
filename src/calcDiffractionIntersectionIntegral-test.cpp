@@ -65,49 +65,52 @@ TEST_CASE("calculateIntersections") {
     std::vector<std::vector<double>> solidAngleWS; 
     size_t sa_row, sa_col;
     sa_strm >> sa_row >> sa_col;
+    REQUIRE(sa_col == 1);
     for(size_t i = 0; i < sa_row; ++i)
     {
-      REQUIRE(sa_col == 1);
       double value;
       sa_strm >> value;
-      solidAngleWS.push_back({value});
+      // solidAngleWS.push_back({value});
     }
 
+    HighFive::File sa_file(SA_NXS, HighFive::File::ReadOnly);
+    HighFive::Group sa_group = sa_file.getGroup("mantid_workspace_1");
+    HighFive::Group sa_group2 = sa_group.getGroup("workspace");
+    HighFive::DataSet sa_dataset = sa_group2.getDataSet("values");
+    std::vector<size_t> dims = sa_dataset.getDimensions();
+    REQUIRE(dims[1] == 1); 
+    std::vector<double> read_data;
+    sa_dataset.read(read_data);
+    
     flux_strm >> ndets_verify;
     REQUIRE(ndets == ndets_verify); 
 
+    for(const double value: read_data)
+      solidAngleWS.push_back({value});
+
     bool haveSA{true};
-
-
 
     HighFive::File file(FLUX_NXS, HighFive::File::ReadOnly);
     HighFive::Group group = file.getGroup("mantid_workspace_1");
     HighFive::Group group2 = group.getGroup("workspace");
     HighFive::DataSet dataset = group2.getDataSet("axis1");
-    std::vector<size_t> dims = dataset.getDimensions();
-    std::vector<double> read_data;
+    dims = dataset.getDimensions();
     dataset.read(read_data);
-
+    REQUIRE(dims.size() == 1);
     std::vector<std::vector<double>> integrFlux_x{1}, integrFlux_y{1};
-
-    REQUIRE(dims[1] == 0);
     for(size_t j = 0; j < dims[0]; ++j)
-    {
       integrFlux_x[0].push_back(read_data[j]);
-    }
 
     dataset = group2.getDataSet("values");
     dims = dataset.getDimensions();
     dataset.read(read_data);
 
+    REQUIRE(dims.size() == 2);
     REQUIRE(dims[0] == 1);
     for(size_t j = 0; j < dims[1]; ++j)
-    {
       integrFlux_y[0].push_back(read_data[j]);
-    }
 
     std::vector<std::atomic<double>> signalArray(200*200);
-    std::vector<std::atomic<double>> bkgdSignalArray(200*200);
 
     std::vector<std::array<double, 4>> intersections;
     std::vector<double> xValues, yValues;
@@ -153,27 +156,9 @@ TEST_CASE("calculateIntersections") {
 
       // Get solid angle for this contribution
       double solid = protonCharge;
-      double bkgdSolid = protonChargeBkgd;
       if (haveSA) {
         double solid_angle_factor = solidAngleWS[solidAngDetToIdx.find(detID)->second][0]; 
         solid *= solid_angle_factor;
-        bkgdSolid *= solid_angle_factor;
-      }
-
-      if(sa_strm.eof())
-        continue;
-
-      auto asdf = sa_strm.tellg();
-      double solid_verify, bkgdSolid_verify;
-      sa_strm >> i_verify >> solid_verify >> bkgdSolid_verify;
-      if(i == i_verify)
-      {
-        REQUIRE_THAT(solid, Catch::Matchers::WithinAbs(solid_verify, 20));
-        REQUIRE_THAT(bkgdSolid, Catch::Matchers::WithinAbs(bkgdSolid_verify,0.0001));
-      }
-      else
-      {
-        sa_strm.seekg(asdf);
       }
 
       calcDiffractionIntersectionIntegral(intersections, xValues, yValues, integrFlux_x, integrFlux_y, wsIdx);
@@ -181,11 +166,36 @@ TEST_CASE("calculateIntersections") {
       pos.resize(vmdDims);
       posNew.resize(vmdDims);
 
-      calcSingleDetectorNorm(intersections, solid, yValues, vmdDims, pos, posNew, signalArray, bkgdSolid, bkgdSignalArray);
+      calcSingleDetectorNorm(intersections, solid, yValues, vmdDims, pos, posNew, signalArray);
     }
 
-    std::ofstream out_strm("meow.txt");
-    for(size_t i = 0; i < signalArray.size();++i)
-      out_strm << signalArray[i] << '\n';    
+    HighFive::File norm_file(NORM_NXS, HighFive::File::ReadOnly);
+    HighFive::Group norm_group = norm_file.getGroup("MDHistoWorkspace");
+    HighFive::Group norm_group2 = norm_group.getGroup("data");
+    HighFive::DataSet norm_dataset = norm_group2.getDataSet("signal");
+    dims = norm_dataset.getDimensions();
+    REQUIRE(dims.size() == 3);
+    REQUIRE(dims[0] == 1);
+    REQUIRE(dims[1] == 200);
+    REQUIRE(dims[2] == 200);
+    std::vector<std::vector<std::vector<double>>> data;
+    norm_dataset.read(data);
+
+    auto &data2d = data[0];
+
+    double max_signal = *std::max_element(signalArray.begin(),signalArray.end());
+
+    double ref_max{0.};
+    for(size_t i = 0; i < dims[1];++i) {
+      for(size_t j = 0; j < dims[2];++j) {
+        REQUIRE_THAT(data2d[i][j],Catch::Matchers::WithinAbs(signalArray[i*dims[1] + j],2.e+04));
+        ref_max = std::max(ref_max,data2d[i][j]);
+      }
+    }
+    REQUIRE_THAT(max_signal,Catch::Matchers::WithinAbs(ref_max,2.e+04));
+
+    //std::ofstream out_strm("meow.txt");
+    //for(size_t i = 0; i < signalArray.size();++i)
+    //  out_strm << signalArray[i] << '\n'; 
   }
 }

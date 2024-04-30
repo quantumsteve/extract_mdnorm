@@ -20,5 +20,4 @@
 void calcSingleDetectorNorm(const std::vector<std::array<double, 4>> &intersections, const double &solid,
                             std::vector<double> &yValues, const size_t &vmdDims,
                             std::vector<float> &pos, std::vector<float> &posNew,
-                            std::vector<std::atomic<double>> &signalArray, const double &solidBkgd,
-                            std::vector<std::atomic<double>> &bkgdSignalArray);
+                            std::vector<std::atomic<double>> &signalArray);

@@ -66,8 +66,7 @@ size_t getLinearIndexAtCoord(const float *coords) {
 void calcSingleDetectorNorm(const std::vector<std::array<double, 4>> &intersections, const double &solid,
                                            std::vector<double> &yValues, const size_t &vmdDims,
                                            std::vector<float> &pos, std::vector<float> &posNew,
-                                           std::vector<std::atomic<double>> &signalArray, const double &solidBkgd,
-                                           std::vector<std::atomic<double>> &bkgdSignalArray) {
+                                           std::vector<std::atomic<double>> &signalArray) {
 
   auto intersectionsBegin = intersections.begin();
   for (auto it = intersectionsBegin + 1; it != intersections.end(); ++it) {
@@ -90,13 +89,11 @@ void calcSingleDetectorNorm(const std::vector<std::array<double, 4>> &intersecti
     std::transform(curIntSec.data(), curIntSec.data() + vmdDims, prevIntSec.data(), pos.begin(),
                    [](const double rhs, const double lhs) { return static_cast<float>(0.5 * (rhs + lhs)); });
     double signal;
-    double bkgdSignal(0.);
     // Diffraction
     // index of the current intersection
     auto k = static_cast<size_t>(std::distance(intersectionsBegin, it));
     // signal = integral between two consecutive intersections
     signal = (yValues[k] - yValues[k - 1]) * solid;
-    bkgdSignal = (yValues[k] - yValues[k - 1]) * solidBkgd;
 
     // Find the coordiate of the new position after transformation
     
@@ -112,13 +109,9 @@ void calcSingleDetectorNorm(const std::vector<std::array<double, 4>> &intersecti
     if (linIndex == size_t(-1))
       continue; // not found
 
-
-
     // Set to output
     // set the calculated signal to
     AtomicOp(signalArray[linIndex], signal, std::plus<double>());
-    // [Task 89]
-    AtomicOp(bkgdSignalArray[linIndex], bkgdSignal, std::plus<double>());
   }
   return;
 }
