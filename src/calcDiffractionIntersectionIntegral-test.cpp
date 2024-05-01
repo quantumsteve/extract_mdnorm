@@ -1,6 +1,5 @@
 #include "calculateIntersections.h"
 #include "calcDiffractionIntersectionIntegral.h"
-#include "calcSingleDetectorNorm.h"
 
 #include "validation_data_filepath.h"
 #include "catch2/catch_all.hpp"
@@ -168,12 +167,13 @@ TEST_CASE("calculateIntersections") {
     dataset.read(detIDs);
 
     std::vector<std::atomic<double>> signalArray(200*200);
+    const size_t vmdDims = 3;
 
-    std::vector<std::array<double, 4>> intersections;
-    std::vector<double> xValues, yValues;
-    std::vector<float> pos, posNew;
-    const size_t vmdDims =  3;
-
+    for (int j = 0; j < 100; ++j) {
+      std::fill(signalArray.begin(), signalArray.end(), 0.);
+      std::vector<std::array<double, 4>> intersections;
+      std::vector<double> xValues, yValues;
+      std::vector<float> pos, posNew;
     #pragma omp parallel for private(intersections, xValues, yValues, pos, posNew)
     for(size_t i = 0; i < ndets; ++i)
     {
@@ -205,7 +205,8 @@ TEST_CASE("calculateIntersections") {
       pos.resize(vmdDims);
       posNew.resize(vmdDims);
 
-      calcSingleDetectorNorm(intersections, solid, yValues, vmdDims, pos, posNew, signalArray);
+      doctest.calcSingleDetectorNorm(intersections, solid, yValues, vmdDims, pos, posNew, signalArray);
+    }
     }
 
     HighFive::File norm_file(NORM_NXS, HighFive::File::ReadOnly);

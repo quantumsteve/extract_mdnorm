@@ -53,7 +53,7 @@ set( FLUX_NXS "${CMAKE_SOURCE_DIR}/data/SingleCrystalDiffuseReduction_Flux.nxs" 
 set( SA_NXS "${CMAKE_SOURCE_DIR}/data/SingleCrystalDiffuseReduction_SA.nxs" )
 set( EVENT_NXS "${CMAKE_SOURCE_DIR}/data/CORELLI_29782_Before_MDNorm.nxs" )
 set( NORM_NXS "${CMAKE_SOURCE_DIR}/data/CORELLI_29782_After_MDNorm.nxs" )
-set( USE_DETS_FILE "${CMAKE_SOURCE_DIR}/data/use_dets.txt")
+set( USE_DETS_FILE "${CMAKE_SOURCE_DIR}/data/use_det.txt")
 configure_file( ${source_path} ${destination_path} )
 
 add_executable(calculateIntersections-test src/calculateIntersections.cpp src/calculateIntersections-test.cpp)
@@ -62,12 +62,11 @@ target_link_libraries(calculateIntersections-test Eigen3::Eigen Catch2::Catch2Wi
 add_executable(wsIdx-test src/wsIdx-test.cpp)
 target_link_libraries(wsIdx-test Catch2::Catch2WithMain)
 
-add_executable(calcDiffractionIntersectionIntegral-test src/calcSingleDetectorNorm.cpp
-                                                        src/calculateIntersections.cpp
+add_executable(calcDiffractionIntersectionIntegral-test src/calculateIntersections.cpp
                                                         src/calcDiffractionIntersectionIntegral.cpp
                                                         src/calcDiffractionIntersectionIntegral-test.cpp )
 
-target_link_libraries(calcDiffractionIntersectionIntegral-test HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
+target_link_libraries(calcDiffractionIntersectionIntegral-test HighFive Eigen3::Eigen Catch2::Catch2WithMain) # OpenMP::OpenMP_CXX)
 
 include( CTest )
 
