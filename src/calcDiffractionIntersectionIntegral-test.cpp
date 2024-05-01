@@ -62,16 +62,6 @@ TEST_CASE("calculateIntersections") {
     }
 
     std::vector<std::vector<double>> solidAngleWS; 
-    size_t sa_row, sa_col;
-    sa_strm >> sa_row >> sa_col;
-    REQUIRE(sa_col == 1);
-    for(size_t i = 0; i < sa_row; ++i)
-    {
-      double value;
-      sa_strm >> value;
-      // solidAngleWS.push_back({value});
-    }
-
     HighFive::File sa_file(SA_NXS, HighFive::File::ReadOnly);
     HighFive::Group sa_group = sa_file.getGroup("mantid_workspace_1");
     HighFive::Group sa_group2 = sa_group.getGroup("workspace");
