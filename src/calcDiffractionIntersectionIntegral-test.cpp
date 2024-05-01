@@ -6,6 +6,8 @@
 
 #include <highfive/highfive.hpp>
 
+#include <boost/histogram.hpp>
+
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -156,10 +158,19 @@ TEST_CASE("calculateIntersections") {
     REQUIRE(dims[0] == 372736);
     dataset.read(detIDs);
 
+    // const char *EventHeaders[] = {"signal, errorSquared, center (each dim.)",
+    //                              "signal, errorSquared, expInfoIndex, goniometerIndex, detectorId, center (each "
+    //                              "dim.)"};
+    // https://github.com/mantidproject/mantid/blob/c3ea43e4605f6898b84bd95c1196ccd8035364b1/Framework/DataObjects/src/BoxControllerNeXusIO.cpp#L27
+    std::vector<std::vector<double>> events;
+    event_group2 = event_group.getGroup("event_data");
+    dataset = event_group2.getDataSet("event_data");
+    dataset.read(events);
+
     std::vector<std::atomic<double>> signalArray(200*200);
     const size_t vmdDims = 3;
 
-    for (int j = 0; j < 100; ++j) {
+    for (int j = 0; j < 1; ++j) {
       std::fill(signalArray.begin(), signalArray.end(), 0.);
       std::vector<std::array<double, 4>> intersections;
       std::vector<double> xValues, yValues;
@@ -222,10 +233,43 @@ TEST_CASE("calculateIntersections") {
         ref_max = std::max(ref_max,data2d[i][j]);
       }
     }
-    REQUIRE_THAT(max_signal,Catch::Matchers::WithinAbs(ref_max,2.e+04));
+    REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));
 
-    //std::ofstream out_strm("meow.txt");
-    //for(size_t i = 0; i < signalArray.size();++i)
-    //  out_strm << signalArray[i] << '\n'; 
+    // std::ofstream out_strm("meow.txt");
+    // for(size_t i = 0; i < signalArray.size();++i)
+    //  out_strm << signalArray[i] << '\n';
+
+    using namespace boost::histogram;
+
+    /*
+      Create a histogram which can be configured dynamically at run-time. The axis
+      configuration is first collected in a vector of axis::variant type, which
+      can hold different axis types (those in its template argument list). Here,
+      we use a variant that can store a regular and a category axis.
+    */
+    using reg = axis::regular<>;
+    // using cat = axis::category<std::string>;
+    // using variant = axis::variant<axis::regular<>, axis::category<std::string>>;
+    std::vector<reg> axes;
+    axes.emplace_back(reg(200, -10., 10., "x"));
+    axes.emplace_back(reg(200, -10., 10., "y"));
+    axes.emplace_back(reg(1, -0.1, 0.1, "z"));
+    // passing an iterator range also works here
+    auto h = make_histogram(std::move(axes));
+
+    for (auto &val : events) {
+      Eigen::Vector3d v(val[5], val[6], val[7]);
+      auto v2 = transform * v;
+      h(v2[0], v2[1], v2[2]);
+    }
+
+    std::vector<double> out;
+    for (auto &&x : indexed(h))
+      out.push_back(*x);
+    std::cout << out.size() << std::endl;
+
+    std::ofstream out_strm("meow.txt");
+    for (size_t i = 0; i < out.size(); ++i)
+      out_strm << out[i] / signalArray[i] << '\n';
   }
 }
