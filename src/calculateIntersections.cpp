@@ -5,9 +5,6 @@
 #include <iomanip>
 #include <iostream>
 
-// function to  compare two intersections (h,k,l,Momentum) by Momentum
-bool compareMomentum(const std::array<double, 4> &v1, const std::array<double, 4> &v2) { return (v1[3] < v2[3]); }
-
 /** Uses std::compare_exchange_weak to update the atomic value f = op(f, d)
  * Used to improve parallel scaling in algorithms MDNormDirectSC and MDNormSCD
  * @param f atomic variable being updated

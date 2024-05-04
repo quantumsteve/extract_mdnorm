@@ -5,12 +5,13 @@
 #include "catch2/catch_all.hpp"
 
 #include <highfive/highfive.hpp>
-
 #include <boost/histogram.hpp>
 
+#include <atomic>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <tuple>
 #include <vector>
 
 TEST_CASE("calculateIntersections") {
@@ -170,12 +171,24 @@ TEST_CASE("calculateIntersections") {
     std::vector<std::atomic<double>> signalArray(200*200);
     const size_t vmdDims = 3;
 
-    for (int j = 0; j < 1; ++j) {
-      std::fill(signalArray.begin(), signalArray.end(), 0.);
-      std::vector<std::array<double, 4>> intersections;
-      std::vector<double> xValues, yValues;
-      std::vector<float> pos, posNew;
-    #pragma omp parallel for private(intersections, xValues, yValues, pos, posNew)
+    using namespace boost::histogram;
+    using reg = axis::regular<>;
+    // using cat = axis::category<std::string>;
+    // using variant = axis::variant<axis::regular<>, axis::category<std::string>>;
+    std::tuple<reg, reg, reg> axes{reg(200, -10., 10., "x"), reg(200, -10., 10., "y"), reg(1, -0.1, 0.1, "z")};
+
+    // for (int j = 0; j < 1; ++j) {
+    //  std::fill(signalArray.begin(), signalArray.end(), 0.);
+
+    auto signal = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
+                                      std::get<1>(axes), std::get<2>(axes));
+
+    std::vector<std::array<double, 4>> intersections;
+    std::vector<double> xValues, yValues;
+    std::vector<float> pos, posNew;
+
+    auto start = std::chrono::high_resolution_clock::now();
+#pragma omp parallel for private(intersections, xValues, yValues, pos, posNew)
     for(size_t i = 0; i < ndets; ++i)
     {
       if(!use_dets[i])
@@ -189,7 +202,8 @@ TEST_CASE("calculateIntersections") {
       else // masked detector in flux, but not in input workspace
         continue;
 
-      doctest.calculateIntersections(intersections, thetaValues[i], phiValues[i], transform, lowValues[i], highValues[i]);
+      doctest.calculateIntersections(signal, intersections, thetaValues[i], phiValues[i], transform, lowValues[i],
+                                     highValues[i]);
 
       if(intersections.empty())
         continue;
@@ -206,9 +220,13 @@ TEST_CASE("calculateIntersections") {
       pos.resize(vmdDims);
       posNew.resize(vmdDims);
 
-      doctest.calcSingleDetectorNorm(intersections, solid, yValues, vmdDims, pos, posNew, signalArray);
+      doctest.calcSingleDetectorNorm(intersections, solid, yValues, vmdDims, pos, posNew, signal);
     }
-    }
+    //}
+
+    auto stop = std::chrono::high_resolution_clock::now();
+    double duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stop - start).count();
+    std::cout << " time: " << duration_total << "s\n";
 
     HighFive::File norm_file(NORM_NXS, HighFive::File::ReadOnly);
     HighFive::Group norm_group = norm_file.getGroup("MDHistoWorkspace");
@@ -224,12 +242,12 @@ TEST_CASE("calculateIntersections") {
 
     auto &data2d = data[0];
 
-    double max_signal = *std::max_element(signalArray.begin(),signalArray.end());
+    double max_signal = *std::max_element(signal.begin(), signal.end());
 
     double ref_max{0.};
     for(size_t i = 0; i < dims[1];++i) {
       for(size_t j = 0; j < dims[2];++j) {
-        REQUIRE_THAT(data2d[i][j],Catch::Matchers::WithinAbs(signalArray[i*dims[1] + j],2.e+04));
+        REQUIRE_THAT(data2d[i][j], Catch::Matchers::WithinAbs(signal.at(j, i, 0), 2.e+04));
         ref_max = std::max(ref_max,data2d[i][j]);
       }
     }
@@ -239,7 +257,6 @@ TEST_CASE("calculateIntersections") {
     // for(size_t i = 0; i < signalArray.size();++i)
     //  out_strm << signalArray[i] << '\n';
 
-    using namespace boost::histogram;
 
     /*
       Create a histogram which can be configured dynamically at run-time. The axis
@@ -247,29 +264,36 @@ TEST_CASE("calculateIntersections") {
       can hold different axis types (those in its template argument list). Here,
       we use a variant that can store a regular and a category axis.
     */
-    using reg = axis::regular<>;
-    // using cat = axis::category<std::string>;
-    // using variant = axis::variant<axis::regular<>, axis::category<std::string>>;
-    std::vector<reg> axes;
-    axes.emplace_back(reg(200, -10., 10., "x"));
-    axes.emplace_back(reg(200, -10., 10., "y"));
-    axes.emplace_back(reg(1, -0.1, 0.1, "z"));
-    // passing an iterator range also works here
-    auto h = make_histogram(std::move(axes));
 
+    // passing an iterator range also works here
+    // auto h = make_histogram(std::move(axes));
+    auto h = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
+                                 std::get<1>(axes), std::get<2>(axes));
+
+    start = std::chrono::high_resolution_clock::now();
+
+#pragma omp parallel for
     for (auto &val : events) {
       Eigen::Vector3d v(val[5], val[6], val[7]);
-      auto v2 = transform * v;
-      h(v2[0], v2[1], v2[2]);
+      v = transform * v;
+      h(v[0], v[1], v[2], weight(val[0]));
     }
+    stop = std::chrono::high_resolution_clock::now();
+    duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stop - start).count();
+    std::cout << " time: " << duration_total << "s\n";
 
     std::vector<double> out;
     for (auto &&x : indexed(h))
       out.push_back(*x);
     std::cout << out.size() << std::endl;
 
+    std::vector<double> meow;
+    for (auto &&x : indexed(signal))
+      meow.push_back(*x);
+    std::cout << meow.size() << std::endl;
+
     std::ofstream out_strm("meow.txt");
     for (size_t i = 0; i < out.size(); ++i)
-      out_strm << out[i] / signalArray[i] << '\n';
+      out_strm << out[i] / meow[i] << '\n';
   }
 }

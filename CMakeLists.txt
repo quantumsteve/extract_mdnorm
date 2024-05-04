@@ -2,7 +2,7 @@ cmake_minimum_required( VERSION 3.22 )
 
 project( mdnorm CXX)
 
-set( CMAKE_CXX_STANDARD 17 )
+set( CMAKE_CXX_STANDARD 20 )
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
 set( CMAKE_CXX_EXTENSIONS OFF )
 
@@ -66,7 +66,7 @@ add_executable(calcDiffractionIntersectionIntegral-test src/calculateIntersectio
                                                         src/calcDiffractionIntersectionIntegral.cpp
                                                         src/calcDiffractionIntersectionIntegral-test.cpp )
 
-target_link_libraries(calcDiffractionIntersectionIntegral-test HighFive Eigen3::Eigen Catch2::Catch2WithMain) # OpenMP::OpenMP_CXX)
+target_link_libraries(calcDiffractionIntersectionIntegral-test HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
 
 include( CTest )
 
