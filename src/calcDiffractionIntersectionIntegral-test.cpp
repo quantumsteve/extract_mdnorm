@@ -48,7 +48,7 @@ TEST_CASE("calculateIntersections") {
         int32_t first;
         size_t second;
         flux_strm >> first >> second;
-        fluxDetToIdx.emplace(first, second);
+        // fluxDetToIdx.emplace(first, second);
     }
 
     std::ifstream sa_strm(SA_WS_FILE);
@@ -61,7 +61,7 @@ TEST_CASE("calculateIntersections") {
         int32_t first;
         size_t second;
         sa_strm >> first >> second;
-        solidAngDetToIdx.emplace(first, second);
+        // solidAngDetToIdx.emplace(first, second);
     }
 
     std::vector<std::vector<double>> solidAngleWS; 
@@ -79,6 +79,24 @@ TEST_CASE("calculateIntersections") {
 
     for(const double value: read_data)
       solidAngleWS.push_back({value});
+
+    sa_group2 = sa_group.getGroup("instrument");
+    HighFive::Group sa_group3 = sa_group2.getGroup("detector");
+    sa_dataset = sa_group3.getDataSet("detector_count");
+    dims = sa_dataset.getDimensions();
+    REQUIRE(dims.size() == 1);
+    REQUIRE(dims[0] == 372736);
+    std::vector<int> dc_data;
+    sa_dataset.read(dc_data);
+
+    int detector{0};
+    size_t idx{0};
+    for (auto &value : dc_data) {
+      for (int i = 0; i < value; ++i) {
+        solidAngDetToIdx.emplace(detector++, idx);
+      }
+      ++idx;
+    }
 
     bool haveSA{true};
 
@@ -101,6 +119,23 @@ TEST_CASE("calculateIntersections") {
     REQUIRE(dims[0] == 1);
     for(size_t j = 0; j < dims[1]; ++j)
       integrFlux_y[0].push_back(read_data[j]);
+
+    group2 = group.getGroup("instrument");
+    HighFive::Group group3 = group2.getGroup("detector");
+    dataset = group3.getDataSet("detector_count");
+    dims = dataset.getDimensions();
+    REQUIRE(dims.size() == 1);
+    REQUIRE(dims[0] == 1);
+    dataset.read(dc_data);
+
+    detector = 0;
+    idx = 0;
+    for (auto &value : dc_data) {
+      for (int i = 0; i < value; ++i) {
+        fluxDetToIdx.emplace(detector++, idx);
+      }
+      ++idx;
+    }
 
     std::vector<bool> use_dets;
     std::ifstream dets_strm(USE_DETS_FILE);
@@ -168,7 +203,6 @@ TEST_CASE("calculateIntersections") {
     dataset = event_group2.getDataSet("event_data");
     dataset.read(events);
 
-    std::vector<std::atomic<double>> signalArray(200*200);
     const size_t vmdDims = 3;
 
     using namespace boost::histogram;
@@ -176,9 +210,6 @@ TEST_CASE("calculateIntersections") {
     // using cat = axis::category<std::string>;
     // using variant = axis::variant<axis::regular<>, axis::category<std::string>>;
     std::tuple<reg, reg, reg> axes{reg(200, -10., 10., "x"), reg(200, -10., 10., "y"), reg(1, -0.1, 0.1, "z")};
-
-    // for (int j = 0; j < 1; ++j) {
-    //  std::fill(signalArray.begin(), signalArray.end(), 0.);
 
     auto signal = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
                                       std::get<1>(axes), std::get<2>(axes));
@@ -253,19 +284,6 @@ TEST_CASE("calculateIntersections") {
     }
     REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));
 
-    // std::ofstream out_strm("meow.txt");
-    // for(size_t i = 0; i < signalArray.size();++i)
-    //  out_strm << signalArray[i] << '\n';
-
-    /*
-      Create a histogram which can be configured dynamically at run-time. The axis
-      configuration is first collected in a vector of axis::variant type, which
-      can hold different axis types (those in its template argument list). Here,
-      we use a variant that can store a regular and a category axis.
-    */
-
-    // passing an iterator range also works here
-    // auto h = make_histogram(std::move(axes));
     auto h = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
                                  std::get<1>(axes), std::get<2>(axes));
 
