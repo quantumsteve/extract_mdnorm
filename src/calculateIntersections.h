@@ -90,7 +90,6 @@ public:
     if (lStartIdx > lEndIdx)
       std::swap(lStartIdx, lEndIdx);
 
-    double eps = 1e-10;
     auto hNBins = m_hX.size();
     auto kNBins = m_kX.size();
     auto lNBins = m_lX.size();

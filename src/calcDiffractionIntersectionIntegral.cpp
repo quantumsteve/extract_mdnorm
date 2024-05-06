@@ -29,7 +29,6 @@ void calcIntegralsForIntersections(const std::vector<double> &xValues,
   // function
   // ie they must make a non-decreasing function
   const auto &yData = integrFlux_y[sp];
-  size_t spSize = yData.size();
 
   const double yMin = 0.0;
   const double yMax = yData.back();
