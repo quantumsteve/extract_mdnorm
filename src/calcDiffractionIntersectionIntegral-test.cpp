@@ -35,34 +35,8 @@ TEST_CASE("calculateIntersections") {
     size_t ndets;
     istrm >> ndets;
 
-    std::ifstream flux_strm(FLUXDET_TO_IDX_FILE);
     std::unordered_map<int32_t, size_t> fluxDetToIdx;
     std::unordered_map<int32_t, size_t> solidAngDetToIdx;
-    size_t ndets_verify;
-    flux_strm >> ndets_verify;
-
-    REQUIRE(ndets == ndets_verify);
-
-    for(size_t i = 0; i < ndets;++i)
-    {
-        int32_t first;
-        size_t second;
-        flux_strm >> first >> second;
-        // fluxDetToIdx.emplace(first, second);
-    }
-
-    std::ifstream sa_strm(SA_WS_FILE);
-    double protonCharge, protonChargeBkgd;
-    sa_strm >> protonCharge >> protonChargeBkgd;
-    size_t sa_size;
-    sa_strm >> sa_size;
-    for(size_t i = 0; i < sa_size;++i)
-    {
-        int32_t first;
-        size_t second;
-        sa_strm >> first >> second;
-        // solidAngDetToIdx.emplace(first, second);
-    }
 
     std::vector<std::vector<double>> solidAngleWS; 
     HighFive::File sa_file(SA_NXS, HighFive::File::ReadOnly);
@@ -74,9 +48,6 @@ TEST_CASE("calculateIntersections") {
     std::vector<double> read_data;
     sa_dataset.read(read_data);
     
-    flux_strm >> ndets_verify;
-    REQUIRE(ndets == ndets_verify); 
-
     for(const double value: read_data)
       solidAngleWS.push_back({value});
 
@@ -165,6 +136,14 @@ TEST_CASE("calculateIntersections") {
     REQUIRE(dims.size() == 1);
     REQUIRE(dims[0] == 372736);
     dataset.read(highValues);
+
+    event_group4 = event_group3.getGroup("gd_prtn_chrg");
+    dataset = event_group4.getDataSet("value");
+    dims = dataset.getDimensions();
+    REQUIRE(dims.size() == 1);
+    REQUIRE(dims[0] == 1);
+    double protonCharge;
+    dataset.read(protonCharge);
 
     std::vector<double> thetaValues, phiValues;
     event_group3 = event_group2.getGroup("instrument");
@@ -302,12 +281,10 @@ TEST_CASE("calculateIntersections") {
     std::vector<double> out;
     for (auto &&x : indexed(h))
       out.push_back(*x);
-    std::cout << out.size() << std::endl;
 
     std::vector<double> meow;
     for (auto &&x : indexed(signal))
       meow.push_back(*x);
-    std::cout << meow.size() << std::endl;
 
     std::ofstream out_strm("meow.txt");
     for (size_t i = 0; i < out.size(); ++i)
