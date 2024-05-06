@@ -195,10 +195,9 @@ public:
       // The full vector isn't used so compute only what is necessary
       // If the difference between 2 adjacent intersection is trivial, no
       // intersection normalization is to be calculated
-      double delta, eps;
       // diffraction
-      delta = curIntSec[3] - prevIntSec[3];
-      eps = 1e-7;
+      double delta = curIntSec[3] - prevIntSec[3];
+      double eps = 1e-7;
       if (delta < eps)
         continue; // Assume zero contribution if difference is small
 
@@ -206,12 +205,12 @@ public:
       // [Task 89] Sample and background have same 'pos[]'
       std::transform(curIntSec.data(), curIntSec.data() + vmdDims, prevIntSec.data(), pos.begin(),
                      [](const double rhs, const double lhs) { return static_cast<float>(0.5 * (rhs + lhs)); });
-      double signal;
+
       // Diffraction
       // index of the current intersection
       auto k = static_cast<size_t>(std::distance(intersectionsBegin, it));
       // signal = integral between two consecutive intersections
-      signal = (yValues[k] - yValues[k - 1]) * solid;
+      double signal = (yValues[k] - yValues[k - 1]) * solid;
 
       // Find the coordiate of the new position after transformation
 

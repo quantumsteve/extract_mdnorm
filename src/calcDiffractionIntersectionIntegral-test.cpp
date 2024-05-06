@@ -257,7 +257,6 @@ TEST_CASE("calculateIntersections") {
     // for(size_t i = 0; i < signalArray.size();++i)
     //  out_strm << signalArray[i] << '\n';
 
-
     /*
       Create a histogram which can be configured dynamically at run-time. The axis
       configuration is first collected in a vector of axis::variant type, which
