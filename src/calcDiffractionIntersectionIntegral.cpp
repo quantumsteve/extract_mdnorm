@@ -1,6 +1,8 @@
 #include "calcDiffractionIntersectionIntegral.h"
 
 #include <cassert>
+#include <cmath>
+#include <iostream>
 
 /**
  * Linearly interpolate between the points in integrFlux at xValues and save the
@@ -39,7 +41,7 @@ void calcIntegralsForIntersections(const std::vector<double> &xValues,
     return;
   }
 
-  // all integrals above xEnd must be equal tp yMax
+  // all integrals above xEnd must be equal to yMax
   if (xValues[0] > xEnd) {
     std::fill(yValues.begin(), yValues.end(), yMax);
     return;
@@ -47,37 +49,29 @@ void calcIntegralsForIntersections(const std::vector<double> &xValues,
 
   size_t i = 0;
   // integrals below xStart must be 0
-  while (i < nData - 1 && xValues[i] < xStart) {
+  while (i < nData - 1 && xValues[i] <= xStart) {
     yValues[i] = yMin;
-    i++;
+    ++i;
   }
-  size_t j = 0;
-  for (; i < nData; i++) {
-    // integrals above xEnd must be equal tp yMax
-    if (j >= spSize - 1) {
-      yValues[i] = yMax;
-    } else {
-      double xi = xValues[i];
-      while (j < spSize - 1 && xi > xData[j])
-        j++;
-      // if x falls onto an interpolation point return the corresponding y
-      if (xi == xData[j]) {
-        yValues[i] = yData[j];
-      } else if (j == spSize - 1) {
-        // if we get above xEnd it's yMax
-        yValues[i] = yMax;
-      } else if (j > 0) {
-        // interpolate between the consecutive points
-        double x0 = xData[j - 1];
-        double x1 = xData[j];
-        double y0 = yData[j - 1];
-        double y1 = yData[j];
-        yValues[i] = y0 + (y1 - y0) * (xi - x0) / (x1 - x0);
-      } else // j == 0
-      {
-        yValues[i] = yMin;
-      }
-    }
+
+  size_t iMax = nData - 1;
+  // integrals above xEnd must be yMax
+  while (iMax > i && xValues[iMax] >= xEnd) {
+    yValues[iMax] = yMax;
+    --iMax;
+  }
+
+  size_t j = 1;
+  for (; i <= iMax; ++i) {
+    double xi = xValues[i];
+    while (xi > xData[j])
+      ++j;
+    // interpolate between the consecutive points
+    double x0 = xData[j - 1];
+    double x1 = xData[j];
+    double y0 = yData[j - 1];
+    double y1 = yData[j];
+    yValues[i] = std::lerp(y0, y1, (xi - x0) / (x1 - x0));
   }
 }
 
