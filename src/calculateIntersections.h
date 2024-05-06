@@ -177,10 +177,6 @@ public:
    * @param solidBkgd: background proton charge
    * @param bkgdSignalArray: (output) background normalization
    */
-  void calcSingleDetectorNorm(const std::vector<std::array<double, 4>> &intersections, const double &solid,
-                              std::vector<double> &yValues, const size_t &vmdDims, std::vector<float> &pos,
-                              std::vector<float> &posNew, std::vector<std::atomic<double>> &signalArray);
-
   template <typename histogram>
   void calcSingleDetectorNorm(const std::vector<std::array<double, 4>> &intersections, const double &solid,
                               std::vector<double> &yValues, const size_t &vmdDims, std::vector<float> &pos,
@@ -234,10 +230,5 @@ public:
   }
 
 private:
-  size_t getLinearIndexAtCoord(const float *coords);
-  float m_origin[3] = {-10., -10, -0.1};
-  float m_boxLength[3] = {0.1, 0.1, 0.2};
-  size_t m_indexMax[3] = {200, 200, 1};
-  size_t m_indexMaker[3];
-  std::vector<double> m_hX, m_kX, m_lX, m_eX;
+  std::vector<double> m_hX, m_kX, m_lX /*, m_eX*/;
 };

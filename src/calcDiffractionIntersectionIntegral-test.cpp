@@ -16,12 +16,33 @@
 
 TEST_CASE("calculateIntersections") {
   SECTION("t0") {
-    std::vector<double> hX(201), kX(201);
-    for(int i = 0; i < 201; ++i)
+
+    using namespace boost::histogram;
+    using reg = axis::regular<float>;
+    std::tuple<reg, reg, reg> axes{reg(200, -10., 10., "x"), reg(200, -10., 10., "y"), reg(1, -0.1, 0.1, "z")};
+
+    std::vector<double> hX, kX, lX;
     {
-      hX[i] = kX[i] =  0.1 * static_cast<double>(i) - 10.;
+      auto &axis = std::get<0>(axes);
+      for (auto &&x : axis) {
+        hX.push_back(x.lower());
+      }
+      hX.push_back(axis.bin(axis.size() - 1).upper());
     }
-    std::vector<double> lX{-0.1, 0.1};
+    {
+      auto &axis = std::get<1>(axes);
+      for (auto &&x : axis) {
+        kX.push_back(x.lower());
+      }
+      kX.push_back(axis.bin(axis.size() - 1).upper());
+    }
+    {
+      auto &axis = std::get<2>(axes);
+      for (auto &&x : axis) {
+        lX.push_back(x.lower());
+      }
+      lX.push_back(axis.bin(axis.size() - 1).upper());
+    }
 
     MDNorm doctest(hX, kX, lX);
     
@@ -184,12 +205,6 @@ TEST_CASE("calculateIntersections") {
 
     const size_t vmdDims = 3;
 
-    using namespace boost::histogram;
-    using reg = axis::regular<>;
-    // using cat = axis::category<std::string>;
-    // using variant = axis::variant<axis::regular<>, axis::category<std::string>>;
-    std::tuple<reg, reg, reg> axes{reg(200, -10., 10., "x"), reg(200, -10., 10., "y"), reg(1, -0.1, 0.1, "z")};
-
     auto signal = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
                                       std::get<1>(axes), std::get<2>(axes));
 
@@ -251,7 +266,6 @@ TEST_CASE("calculateIntersections") {
     norm_dataset.read(data);
 
     auto &data2d = data[0];
-
     double max_signal = *std::max_element(signal.begin(), signal.end());
 
     double ref_max{0.};
