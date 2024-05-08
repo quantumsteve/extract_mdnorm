@@ -66,9 +66,6 @@ TEST_CASE("calculateIntersections") {
     Eigen::Matrix3d m_W;
     m_W << 1., 1., 0., 1., -1., 0., 0., 0., 1;
 
-    Eigen::Matrix3d transform4 = rotMatrix * m_UB * symm[3] * m_W;
-    Eigen::Matrix3d transform = transform4.inverse();
-
     std::unordered_map<int32_t, size_t> fluxDetToIdx;
     std::unordered_map<int32_t, size_t> solidAngDetToIdx;
 
@@ -232,43 +229,44 @@ TEST_CASE("calculateIntersections") {
     std::vector<std::array<double, 4>> intersections;
     std::vector<double> xValues, yValues;
     std::vector<float> pos, posNew;
-
     auto start = std::chrono::high_resolution_clock::now();
+    for (const Eigen::Matrix3d &op : symm) {
+      Eigen::Matrix3d transform4 = rotMatrix * m_UB * op * m_W;
+      Eigen::Matrix3d transform = transform4.inverse();
 #pragma omp parallel for private(intersections, xValues, yValues, pos, posNew)
-    for(size_t i = 0; i < ndets; ++i)
-    {
-      if(!use_dets[i])
-        continue;
+      for (size_t i = 0; i < ndets; ++i) {
+        if (!use_dets[i])
+          continue;
 
-      int32_t detID = detIDs[i];
-      // get the flux spectrum number: this is for diffraction only!
-      size_t wsIdx = 0;
-      if (auto index = fluxDetToIdx.find(detID); index != fluxDetToIdx.end())
-        wsIdx = index->second;
-      else // masked detector in flux, but not in input workspace
-        continue;
+        int32_t detID = detIDs[i];
+        // get the flux spectrum number: this is for diffraction only!
+        size_t wsIdx = 0;
+        if (auto index = fluxDetToIdx.find(detID); index != fluxDetToIdx.end())
+          wsIdx = index->second;
+        else // masked detector in flux, but not in input workspace
+          continue;
 
-      doctest.calculateIntersections(signal, intersections, thetaValues[i], phiValues[i], transform, lowValues[i],
-                                     highValues[i]);
+        doctest.calculateIntersections(signal, intersections, thetaValues[i], phiValues[i], transform, lowValues[i],
+                                       highValues[i]);
 
-      if(intersections.empty())
-        continue;
+        if (intersections.empty())
+          continue;
 
-      // Get solid angle for this contribution
-      double solid = protonCharge;
-      if (haveSA) {
-        double solid_angle_factor = solidAngleWS[solidAngDetToIdx.find(detID)->second][0]; 
-        solid *= solid_angle_factor;
+        // Get solid angle for this contribution
+        double solid = protonCharge;
+        if (haveSA) {
+          double solid_angle_factor = solidAngleWS[solidAngDetToIdx.find(detID)->second][0];
+          solid *= solid_angle_factor;
+        }
+
+        calcDiffractionIntersectionIntegral(intersections, xValues, yValues, integrFlux_x, integrFlux_y, wsIdx);
+
+        pos.resize(vmdDims);
+        posNew.resize(vmdDims);
+
+        doctest.calcSingleDetectorNorm(intersections, solid, yValues, vmdDims, pos, posNew, signal);
       }
-
-      calcDiffractionIntersectionIntegral(intersections, xValues, yValues, integrFlux_x, integrFlux_y, wsIdx);
-
-      pos.resize(vmdDims);
-      posNew.resize(vmdDims);
-
-      doctest.calcSingleDetectorNorm(intersections, solid, yValues, vmdDims, pos, posNew, signal);
     }
-    //}
 
     auto stop = std::chrono::high_resolution_clock::now();
     double duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stop - start).count();
@@ -292,7 +290,7 @@ TEST_CASE("calculateIntersections") {
     double ref_max{0.};
     for(size_t i = 0; i < dims[1];++i) {
       for(size_t j = 0; j < dims[2];++j) {
-        REQUIRE_THAT(data2d[i][j], Catch::Matchers::WithinAbs(signal.at(j, i, 0), 2.e+04));
+        REQUIRE_THAT(data2d[i][j], Catch::Matchers::WithinAbs(signal.at(j, i, 0), 5.e+05));
         ref_max = std::max(ref_max,data2d[i][j]);
       }
     }
@@ -303,11 +301,15 @@ TEST_CASE("calculateIntersections") {
 
     start = std::chrono::high_resolution_clock::now();
 
+    for (const Eigen::Matrix3d &op : symm) {
+      Eigen::Matrix3d transform4 = rotMatrix * m_UB * op * m_W;
+      Eigen::Matrix3d transform = transform4.inverse();
 #pragma omp parallel for
-    for (auto &val : events) {
-      Eigen::Vector3d v(val[5], val[6], val[7]);
-      v = transform * v;
-      h(v[0], v[1], v[2], weight(val[0]));
+      for (auto &val : events) {
+        Eigen::Vector3d v(val[5], val[6], val[7]);
+        v = transform * v;
+        h(v[0], v[1], v[2], weight(val[0]));
+      }
     }
     stop = std::chrono::high_resolution_clock::now();
     duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stop - start).count();
