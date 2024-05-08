@@ -4,8 +4,9 @@
 #include "validation_data_filepath.h"
 #include "catch2/catch_all.hpp"
 
-#include <highfive/highfive.hpp>
 #include <boost/histogram.hpp>
+#include <highfive/eigen.hpp>
+#include <highfive/highfive.hpp>
 
 #include <atomic>
 #include <fstream>
@@ -45,16 +46,28 @@ TEST_CASE("calculateIntersections") {
     }
 
     MDNorm doctest(hX, kX, lX);
-    
-    std::ifstream istrm(CALC_INTERSECTIONS_FILE);
 
-    Eigen::Matrix3d transform;
-    istrm >> transform(0,0) >> transform(0,1) >> transform(0,2) 
-	        >> transform(1,0) >> transform(1,1) >> transform(1,2)
-	        >> transform(2,0) >> transform(2,1) >> transform(2,2);
+    HighFive::File rot_file(ROT_NXS, HighFive::File::ReadOnly);
+    HighFive::Group rot_group = rot_file.getGroup("expinfo_0");
+    HighFive::DataSet rot_dataset = rot_group.getDataSet("goniometer_0");
+    auto rotMatrix = rot_dataset.read<Eigen::Matrix3d>();
 
-    size_t ndets;
-    istrm >> ndets;
+    rot_group = rot_file.getGroup("symmetryOps");
+    auto n_elements = rot_group.getNumberObjects();
+    std::vector<Eigen::Matrix3d> symm;
+    for (size_t i = 0; i < n_elements; ++i) {
+      rot_dataset = rot_group.getDataSet("op_" + std::to_string(i));
+      symm.push_back(rot_dataset.read<Eigen::Matrix3d>());
+    }
+
+    rot_dataset = rot_file.getDataSet("ubmatrix");
+    auto m_UB = rot_dataset.read<Eigen::Matrix3d>();
+
+    Eigen::Matrix3d m_W;
+    m_W << 1., 1., 0., 1., -1., 0., 0., 0., 1;
+
+    Eigen::Matrix3d transform4 = rotMatrix * m_UB * symm[3] * m_W;
+    Eigen::Matrix3d transform = transform4.inverse();
 
     std::unordered_map<int32_t, size_t> fluxDetToIdx;
     std::unordered_map<int32_t, size_t> solidAngDetToIdx;
@@ -128,6 +141,14 @@ TEST_CASE("calculateIntersections") {
       }
       ++idx;
     }
+
+    group3 = group2.getGroup("physical_detectors");
+    dataset = group3.getDataSet("number_of_detectors");
+    dims = dataset.getDimensions();
+    REQUIRE(dims.size() == 1);
+    REQUIRE(dims[0] == 1);
+    size_t ndets;
+    dataset.read(ndets);
 
     std::vector<bool> use_dets;
     std::ifstream dets_strm(USE_DETS_FILE);

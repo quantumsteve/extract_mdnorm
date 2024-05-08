@@ -9,3 +9,4 @@
 #cmakedefine SA_NXS "${SA_NXS}"
 #cmakedefine EVENT_NXS "${EVENT_NXS}"
 #cmakedefine NORM_NXS "${NORM_NXS}"
+#cmakedefine ROT_NXS "${ROT_NXS}"
