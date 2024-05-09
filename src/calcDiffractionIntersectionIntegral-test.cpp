@@ -291,11 +291,11 @@ TEST_CASE("calculateIntersections") {
     double ref_max{0.};
     for(size_t i = 0; i < dims[1];++i) {
       for(size_t j = 0; j < dims[2];++j) {
-        //REQUIRE_THAT(data2d[i][j], Catch::Matchers::WithinAbs(signal.at(j, i, 0), 5.e+05));
+        REQUIRE_THAT(data2d[i][j], Catch::Matchers::WithinAbs(signal.at(j, i, 0), 5.e+05));
         ref_max = std::max(ref_max,data2d[i][j]);
       }
     }
-    //REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));
+    REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));
 
     auto h = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
                                  std::get<1>(axes), std::get<2>(axes));
