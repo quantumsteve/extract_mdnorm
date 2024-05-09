@@ -21,7 +21,7 @@ void calcIntegralsForIntersections(const std::vector<double> &xValues,
   assert(xValues.size() == yValues.size());
 
   // the x-data from the workspace
-  const auto &xData = integrFlux_x[sp];
+  const auto &xData = integrFlux_x[0];
   const double xStart = xData.front();
   const double xEnd = xData.back();
 

@@ -56,6 +56,11 @@ set( EVENT_NXS "${CMAKE_SOURCE_DIR}/data/CORELLI_29782_Before_MDNorm.nxs" )
 set( NORM_NXS "${CMAKE_SOURCE_DIR}/data/CORELLI_29782_After_MDNorm_symm.nxs" )
 set( USE_DETS_FILE "${CMAKE_SOURCE_DIR}/data/use_det.txt")
 set( ROT_NXS "${CMAKE_SOURCE_DIR}/data/CORELLI_29782_rotations.hdf5")
+set( GARNET_EVENT_NXS "${CMAKE_SOURCE_DIR}/data/garnet/CORELLI_BEFORE_MDNorm.nxs")
+set( GARNET_SA_NXS "${CMAKE_SOURCE_DIR}/data/garnet/solid_angle_2p5-8.nxs")
+set( GARNET_FLUX_NXS "${CMAKE_SOURCE_DIR}/data/garnet/flux_2p5-8.nxs")
+set( GARNET_ROT_NXS "${CMAKE_SOURCE_DIR}/data/garnet/CORELLI_extra_params.hdf5")
+
 configure_file( ${source_path} ${destination_path} )
 
 add_executable(calculateIntersections-test src/calculateIntersections.cpp src/calculateIntersections-test.cpp)
@@ -69,6 +74,12 @@ add_executable(calcDiffractionIntersectionIntegral-test src/calculateIntersectio
                                                         src/calcDiffractionIntersectionIntegral-test.cpp )
 
 target_link_libraries(calcDiffractionIntersectionIntegral-test HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
+
+add_executable(garnet_reduction_corelli src/calculateIntersections.cpp
+                                        src/calcDiffractionIntersectionIntegral.cpp
+                                        src/garnet_reduction_corelli.cpp )
+
+target_link_libraries(garnet_reduction_corelli HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
 
 include( CTest )
 

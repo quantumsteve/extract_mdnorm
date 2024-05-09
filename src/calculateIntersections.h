@@ -64,31 +64,31 @@ public:
     //  kfmax = std::sqrt(energyToK * (m_Ei - lowvalue));
     //}
 
-    double hStart = qin[0] * kimin - qout[0] * kfmin, hEnd = qin[0] * kimax - qout[0] * kfmax;
+    double hStart = qin[0] * kimin - qout[0] * kfmin;
+    double hEnd = qin[0] * kimax - qout[0] * kfmax;
 
-    auto hStartIdx =
-        std::clamp(0, h.axis(0).index(hStart), static_cast<boost::histogram::axis::index_type>(m_hX.size()) - 1);
-    auto hEndIdx =
-        std::clamp(0, h.axis(0).index(hEnd), static_cast<boost::histogram::axis::index_type>(m_hX.size()) - 1);
+    auto hStartIdx = h.axis(0).index(hStart);
+    auto hEndIdx = h.axis(0).index(hEnd);
     if (hStartIdx > hEndIdx)
       std::swap(hStartIdx, hEndIdx);
+    ++hStartIdx;
 
-    double kStart = qin[1] * kimin - qout[1] * kfmin, kEnd = qin[1] * kimax - qout[1] * kfmax;
+    double kStart = qin[1] * kimin - qout[1] * kfmin;
+    double kEnd = qin[1] * kimax - qout[1] * kfmax;
 
-    auto kStartIdx =
-        std::clamp(0, h.axis(1).index(kStart), static_cast<boost::histogram::axis::index_type>(m_kX.size()) - 1);
-    auto kEndIdx =
-        std::clamp(0, h.axis(1).index(kEnd), static_cast<boost::histogram::axis::index_type>(m_kX.size()) - 1);
+    auto kStartIdx = h.axis(1).index(kStart);
+    auto kEndIdx = h.axis(1).index(kEnd);
     if (kStartIdx > kEndIdx)
       std::swap(kStartIdx, kEndIdx);
+    ++kStartIdx;
 
-    double lStart = qin[2] * kimin - qout[2] * kfmin, lEnd = qin[2] * kimax - qout[2] * kfmax;
-    auto lStartIdx =
-        std::clamp(0, h.axis(2).index(lStart), static_cast<boost::histogram::axis::index_type>(m_lX.size()) - 1);
-    auto lEndIdx =
-        std::clamp(0, h.axis(2).index(lEnd), static_cast<boost::histogram::axis::index_type>(m_lX.size()) - 1);
+    double lStart = qin[2] * kimin - qout[2] * kfmin;
+    double lEnd = qin[2] * kimax - qout[2] * kfmax;
+    auto lStartIdx = h.axis(2).index(lStart);
+    auto lEndIdx = h.axis(2).index(lEnd);
     if (lStartIdx > lEndIdx)
       std::swap(lStartIdx, lEndIdx);
+    ++lStartIdx;
 
     auto hNBins = m_hX.size();
     auto kNBins = m_kX.size();
@@ -101,7 +101,7 @@ public:
       double fmom = (kfmax - kfmin) / (hEnd - hStart);
       double fk = (kEnd - kStart) / (hEnd - hStart);
       double fl = (lEnd - lStart) / (hEnd - hStart);
-      for (int i = hStartIdx; i <= hEndIdx; ++i) {
+      for (int i = hStartIdx; i < hEndIdx; ++i) {
         double hi = m_hX[i];
         // if hi is between hStart and hEnd, then ki and li will be between
         // kStart, kEnd and lStart, lEnd and momi will be between kfmin and
@@ -120,7 +120,7 @@ public:
       double fmom = (kfmax - kfmin) / (kEnd - kStart);
       double fh = (hEnd - hStart) / (kEnd - kStart);
       double fl = (lEnd - lStart) / (kEnd - kStart);
-      for (auto i = kStartIdx; i <= kEndIdx; ++i) {
+      for (auto i = kStartIdx; i < kEndIdx; ++i) {
         double ki = m_kX[i];
         // if ki is between kStart and kEnd, then hi and li will be between
         // hStart, hEnd and lStart, lEnd and momi will be between kfmin and
@@ -140,7 +140,7 @@ public:
       double fh = (hEnd - hStart) / (lEnd - lStart);
       double fk = (kEnd - kStart) / (lEnd - lStart);
 
-      for (auto i = lStartIdx; i <= lEndIdx; ++i) {
+      for (auto i = lStartIdx; i < lEndIdx; ++i) {
         double li = m_lX[i];
         double hi = fh * (li - lStart) + hStart;
         double ki = fk * (li - lStart) + kStart;

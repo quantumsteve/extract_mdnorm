@@ -10,3 +10,7 @@
 #cmakedefine EVENT_NXS "${EVENT_NXS}"
 #cmakedefine NORM_NXS "${NORM_NXS}"
 #cmakedefine ROT_NXS "${ROT_NXS}"
+#cmakedefine GARNET_EVENT_NXS "${GARNET_EVENT_NXS}"
+#cmakedefine GARNET_SA_NXS "${GARNET_SA_NXS}"
+#cmakedefine GARNET_FLUX_NXS "${GARNET_FLUX_NXS}"
+#cmakedefine GARNET_ROT_NXS "${GARNET_ROT_NXS}"
