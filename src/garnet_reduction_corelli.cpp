@@ -20,7 +20,8 @@ TEST_CASE("calculateIntersections") {
 
     using namespace boost::histogram;
     using reg = axis::regular<float>;
-    std::tuple<reg, reg, reg> axes{reg(201, -10.05, 10.05, "x"), reg(201, -10.05, 10.05, "y"), reg(1, -0.1, 0.1, "z")};
+    std::tuple<reg, reg, reg> axes{reg(201, -10.05, 10.05, "x"), reg(201, -10.05, 10.05, "y"),
+                                   reg(201, -10.05, 10.05, "z")};
 
     std::vector<double> hX, kX, lX;
     {

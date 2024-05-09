@@ -53,13 +53,12 @@ TEST_CASE("calculateIntersections") {
     auto rotMatrix = rot_dataset.read<Eigen::Matrix3d>();
 
     rot_group = rot_file.getGroup("symmetryOps");
-    //auto n_elements = rot_group.getNumberObjects();
+    auto n_elements = rot_group.getNumberObjects();
     std::vector<Eigen::Matrix3d> symm;
-    /*for (size_t i = 0; i < n_elements; ++i) {
+    for (size_t i = 0; i < n_elements; ++i) {
       rot_dataset = rot_group.getDataSet("op_" + std::to_string(i));
       symm.push_back(rot_dataset.read<Eigen::Matrix3d>());
-    }*/
-    symm.push_back(Eigen::Matrix3d::Identity());
+    }
 
     rot_dataset = rot_file.getDataSet("ubmatrix");
     auto m_UB = rot_dataset.read<Eigen::Matrix3d>();
@@ -235,7 +234,6 @@ TEST_CASE("calculateIntersections") {
     for (const Eigen::Matrix3d &op : symm) {
       Eigen::Matrix3d transform4 = rotMatrix * m_UB * op * m_W;
       Eigen::Matrix3d transform = transform4.inverse();
-      std::cout << transform << std::endl;
 #pragma omp parallel for private(intersections, xValues, yValues, pos, posNew)
       for (size_t i = 0; i < ndets; ++i) {
         if (!use_dets[i])
@@ -305,10 +303,8 @@ TEST_CASE("calculateIntersections") {
     start = std::chrono::high_resolution_clock::now();
 
     for (const Eigen::Matrix3d &op : symm) {
-      std::cout << op << std::endl;
       Eigen::Matrix3d transform4 = rotMatrix * m_UB * op * m_W;
       Eigen::Matrix3d transform = transform4.inverse();
-      std::cout << transform << std::endl;
 #pragma omp parallel for
       for (auto &val : events) {
         Eigen::Vector3d v(val[5], val[6], val[7]);
