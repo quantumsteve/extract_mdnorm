@@ -210,17 +210,13 @@ public:
    * @param intersections: intersections
    * @param solid: proton charge
    * @param yValues: diffraction intersection integral and common to sample and background
-   * @param vmdDims: MD dimensions
-   * @param pos: position from intersecton for memory efficiency
-   * @param posNew: transformed positions
    * @param signalArray: (output) normalization
    * @param solidBkgd: background proton charge
    * @param bkgdSignalArray: (output) background normalization
    */
   template <typename histogram>
   void calcSingleDetectorNorm(const std::vector<std::array<float, 4>> &intersections, const double &solid,
-                              std::vector<double> &yValues, const size_t &vmdDims, std::vector<float> &pos,
-                              std::vector<float> &posNew, histogram &h) {
+                              std::vector<double> &yValues, histogram &h) {
 
     auto intersectionsBegin = intersections.begin();
     for (auto it = intersectionsBegin + 1; it != intersections.end(); ++it) {
@@ -239,8 +235,9 @@ public:
 
       // Average between two intersections for final position
       // [Task 89] Sample and background have same 'pos[]'
-      std::transform(curIntSec.data(), curIntSec.data() + vmdDims, prevIntSec.data(), pos.begin(),
-                     [](const double rhs, const double lhs) { return static_cast<float>(0.5 * (rhs + lhs)); });
+      Eigen::Vector3f pos;
+      std::transform(curIntSec.data(), curIntSec.data() + 3, prevIntSec.data(), pos.data(),
+                     [](const float rhs, const float lhs) { return 0.5f * (rhs + lhs); });
 
       // Diffraction
       // index of the current intersection
@@ -249,9 +246,9 @@ public:
       double signal = (yValues[k] - yValues[k - 1]) * solid;
 
       // Find the coordiate of the new position after transformation
-
+      Eigen::Vector3f posNew = pos;
       // m_transformation.multiplyPoint(pos, posNew); (identify matrix)
-      std::copy(std::begin(pos), std::end(pos), std::begin(posNew));
+      // std::copy(std::begin(pos), std::end(pos), std::begin(posNew));
 
       // [Task 89] Is linIndex common to both sample and background?
       // size_t linIndex = this->getLinearIndexAtCoord(posNew.data());

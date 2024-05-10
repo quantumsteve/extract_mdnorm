@@ -225,15 +225,12 @@ TEST_CASE("calculateIntersections") {
     dataset = event_group2.getDataSet("event_data");
     dataset.read(events);
 
-    const size_t vmdDims = 3;
-
     auto signal = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
                                       std::get<1>(axes), std::get<2>(axes));
 
     std::vector<std::array<float, 4>> intersections;
     std::vector<float> xValues;
     std::vector<double> yValues;
-    std::vector<float> pos, posNew;
 
     std::vector<Eigen::Matrix3f> transforms;
     for (const Eigen::Matrix3f &op : symm) {
@@ -242,7 +239,7 @@ TEST_CASE("calculateIntersections") {
     }
 
     auto start = std::chrono::high_resolution_clock::now();
-#pragma omp parallel for collapse(2) private(intersections, xValues, yValues, pos, posNew)
+#pragma omp parallel for collapse(2) private(intersections, xValues, yValues)
     for (const Eigen::Matrix3f &op : transforms) {
       for (size_t i = 0; i < ndets; ++i) {
         if (!use_dets[i])
@@ -271,10 +268,7 @@ TEST_CASE("calculateIntersections") {
 
         calcDiffractionIntersectionIntegral(intersections, xValues, yValues, integrFlux_x, integrFlux_y, wsIdx);
 
-        pos.resize(vmdDims);
-        posNew.resize(vmdDims);
-
-        doctest.calcSingleDetectorNorm(intersections, solid, yValues, vmdDims, pos, posNew, signal);
+        doctest.calcSingleDetectorNorm(intersections, solid, yValues, signal);
       }
     }
 
