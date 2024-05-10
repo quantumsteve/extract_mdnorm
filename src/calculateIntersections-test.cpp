@@ -9,11 +9,11 @@
 
 TEST_CASE("calculateIntersections") {
   SECTION("t0") {
-    std::vector<double> hX(201), kX(201);
+    std::vector<float> hX(201), kX(201);
     for (int i = 0; i < 201; ++i) {
       hX[i] = kX[i] = 0.1 * static_cast<double>(i) - 10.;
     }
-    std::vector<double> lX{-0.1, 0.1};
+    std::vector<float> lX{-0.1, 0.1};
 
     MDNorm doctest(hX, kX, lX);
 

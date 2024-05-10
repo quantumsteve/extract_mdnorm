@@ -61,7 +61,7 @@ size_t getLinearIndexAtCoord(const float *coords) {
  * @param solidBkgd: background proton charge
  * @param bkgdSignalArray: (output) background normalization
  */
-void calcSingleDetectorNorm(const std::vector<std::array<double, 4>> &intersections, const double &solid,
+void calcSingleDetectorNorm(const std::vector<std::array<float, 4>> &intersections, const double &solid,
                             std::vector<double> &yValues, const size_t &vmdDims, std::vector<float> &pos,
                             std::vector<float> &posNew, std::vector<std::atomic<double>> &signalArray) {
 

@@ -12,8 +12,8 @@
  * @param sp :: A workspace index for a spectrum in integrFlux to interpolate.
  * @param yValues :: A vector to save the results.
  */
-void calcIntegralsForIntersections(const std::vector<double> &xValues,
-                                   const std::vector<std::vector<double>> &integrFlux_x,
+void calcIntegralsForIntersections(const std::vector<float> &xValues,
+                                   const std::vector<std::vector<float>> &integrFlux_x,
                                    const std::vector<std::vector<double>> &integrFlux_y, const size_t sp,
                                    std::vector<double> &yValues) {
 
@@ -82,9 +82,9 @@ void calcIntegralsForIntersections(const std::vector<double> &xValues,
  * @param integrFlux: integral flux workspace
  * @param wsIdx: workspace index
  */
-void calcDiffractionIntersectionIntegral(std::vector<std::array<double, 4>> &intersections,
-                                         std::vector<double> &xValues, std::vector<double> &yValues,
-                                         const std::vector<std::vector<double>> &integrFlux_x,
+void calcDiffractionIntersectionIntegral(std::vector<std::array<float, 4>> &intersections, std::vector<float> &xValues,
+                                         std::vector<double> &yValues,
+                                         const std::vector<std::vector<float>> &integrFlux_x,
                                          const std::vector<std::vector<double>> &integrFlux_y, const size_t wsIdx) {
   // -- calculate integrals for the intersection --
   // momentum values at intersections

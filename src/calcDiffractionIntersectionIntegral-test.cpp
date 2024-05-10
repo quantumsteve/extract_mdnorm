@@ -5,6 +5,7 @@
 #include "validation_data_filepath.h"
 
 #include <boost/histogram.hpp>
+#include <boost/math/constants/constants.hpp>
 #include <highfive/eigen.hpp>
 #include <highfive/highfive.hpp>
 
@@ -22,7 +23,7 @@ TEST_CASE("calculateIntersections") {
     using reg = axis::regular<float>;
     std::tuple<reg, reg, reg> axes{reg(200, -10., 10., "x"), reg(200, -10., 10., "y"), reg(1, -0.1, 0.1, "z")};
 
-    std::vector<double> hX, kX, lX;
+    std::vector<float> hX, kX, lX;
     {
       auto &axis = std::get<0>(axes);
       for (auto &&x : axis) {
@@ -50,21 +51,21 @@ TEST_CASE("calculateIntersections") {
     HighFive::File rot_file(ROT_NXS, HighFive::File::ReadOnly);
     HighFive::Group rot_group = rot_file.getGroup("expinfo_0");
     HighFive::DataSet rot_dataset = rot_group.getDataSet("goniometer_0");
-    auto rotMatrix = rot_dataset.read<Eigen::Matrix3d>();
+    auto rotMatrix = rot_dataset.read<Eigen::Matrix3f>();
 
     rot_group = rot_file.getGroup("symmetryOps");
     auto n_elements = rot_group.getNumberObjects();
-    std::vector<Eigen::Matrix3d> symm;
+    std::vector<Eigen::Matrix3f> symm;
     for (size_t i = 0; i < n_elements; ++i) {
       rot_dataset = rot_group.getDataSet("op_" + std::to_string(i));
-      symm.push_back(rot_dataset.read<Eigen::Matrix3d>());
+      symm.push_back(rot_dataset.read<Eigen::Matrix3f>());
     }
 
     rot_dataset = rot_file.getDataSet("ubmatrix");
-    auto m_UB = rot_dataset.read<Eigen::Matrix3d>();
+    auto m_UB = rot_dataset.read<Eigen::Matrix3f>();
 
-    Eigen::Matrix3d m_W;
-    m_W << 1., 1., 0., 1., -1., 0., 0., 0., 1;
+    Eigen::Matrix3f m_W;
+    m_W << 1.f, 1.f, 0.f, 1.f, -1.f, 0.f, 0.f, 0.f, 1.f;
 
     std::unordered_map<int32_t, size_t> fluxDetToIdx;
     std::unordered_map<int32_t, size_t> solidAngDetToIdx;
@@ -108,11 +109,12 @@ TEST_CASE("calculateIntersections") {
     HighFive::Group group2 = group.getGroup("workspace");
     HighFive::DataSet dataset = group2.getDataSet("axis1");
     dims = dataset.getDimensions();
-    dataset.read(read_data);
+    std::vector<float> read_data_f;
+    dataset.read(read_data_f);
     REQUIRE(dims.size() == 1);
-    std::vector<std::vector<double>> integrFlux_x{1}, integrFlux_y{1};
+    std::vector<std::vector<float>> integrFlux_x{1};
     for (size_t j = 0; j < dims[0]; ++j)
-      integrFlux_x[0].push_back(read_data[j]);
+      integrFlux_x[0].push_back(read_data_f[j]);
 
     dataset = group2.getDataSet("values");
     dims = dataset.getDimensions();
@@ -120,6 +122,7 @@ TEST_CASE("calculateIntersections") {
 
     REQUIRE(dims.size() == 2);
     REQUIRE(dims[0] == 1);
+    std::vector<std::vector<double>> integrFlux_y{1};
     for (size_t j = 0; j < dims[1]; ++j)
       integrFlux_y[0].push_back(read_data[j]);
 
@@ -158,7 +161,7 @@ TEST_CASE("calculateIntersections") {
       use_dets.push_back(value);
     }
 
-    std::vector<double> lowValues, highValues;
+    std::vector<float> lowValues, highValues;
 
     HighFive::File event_file(EVENT_NXS, HighFive::File::ReadOnly);
     HighFive::Group event_group = event_file.getGroup("MDEventWorkspace");
@@ -185,7 +188,7 @@ TEST_CASE("calculateIntersections") {
     double protonCharge;
     dataset.read(protonCharge);
 
-    std::vector<double> thetaValues, phiValues;
+    std::vector<float> thetaValues, phiValues;
     event_group3 = event_group2.getGroup("instrument");
     event_group4 = event_group3.getGroup("physical_detectors");
     dataset = event_group4.getDataSet("polar_angle");
@@ -195,7 +198,7 @@ TEST_CASE("calculateIntersections") {
     dataset.read(thetaValues);
 
     for (auto &value : thetaValues)
-      value = value * M_PI / 180.;
+      value *= boost::math::float_constants::degree;
 
     dataset = event_group4.getDataSet("azimuthal_angle");
     dims = dataset.getDimensions();
@@ -204,7 +207,7 @@ TEST_CASE("calculateIntersections") {
     dataset.read(phiValues);
 
     for (auto &value : phiValues)
-      value = value * M_PI / 180.;
+      value *= boost::math::float_constants::degree;
 
     std::vector<int> detIDs;
     dataset = event_group4.getDataSet("detector_number");
@@ -227,19 +230,20 @@ TEST_CASE("calculateIntersections") {
     auto signal = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
                                       std::get<1>(axes), std::get<2>(axes));
 
-    std::vector<std::array<double, 4>> intersections, intersections2;
-    std::vector<double> xValues, yValues;
+    std::vector<std::array<float, 4>> intersections;
+    std::vector<float> xValues;
+    std::vector<double> yValues;
     std::vector<float> pos, posNew;
 
-    std::vector<Eigen::Matrix3d> transforms;
-    for (const Eigen::Matrix3d &op : symm) {
-      Eigen::Matrix3d transform = rotMatrix * m_UB * op * m_W;
+    std::vector<Eigen::Matrix3f> transforms;
+    for (const Eigen::Matrix3f &op : symm) {
+      Eigen::Matrix3f transform = rotMatrix * m_UB * op * m_W;
       transforms.push_back(transform.inverse());
     }
 
     auto start = std::chrono::high_resolution_clock::now();
 #pragma omp parallel for collapse(2) private(intersections, xValues, yValues, pos, posNew)
-    for (const Eigen::Matrix3d &op : transforms) {
+    for (const Eigen::Matrix3f &op : transforms) {
       for (size_t i = 0; i < ndets; ++i) {
         if (!use_dets[i])
           continue;
@@ -308,9 +312,9 @@ TEST_CASE("calculateIntersections") {
     start = std::chrono::high_resolution_clock::now();
 
 #pragma omp parallel for collapse(2)
-    for (const Eigen::Matrix3d &op : transforms) {
+    for (const Eigen::Matrix3f &op : transforms) {
       for (auto &val : events) {
-        Eigen::Vector3d v(val[5], val[6], val[7]);
+        Eigen::Vector3f v(val[5], val[6], val[7]);
         v = op * v;
         h(v[0], v[1], v[2], weight(val[0]));
       }

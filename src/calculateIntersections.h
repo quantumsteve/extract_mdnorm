@@ -9,13 +9,17 @@
 #include <vector>
 
 // function to  compare two intersections (h,k,l,Momentum) by Momentum
-inline bool compareMomentum(const std::array<double, 4> &v1, const std::array<double, 4> &v2) {
+inline bool compareMomentum_f(const std::array<float, 4> &v1, const std::array<float, 4> &v2) {
+  return (v1[3] < v2[3]);
+}
+// function to  compare two intersections (h,k,l,Momentum) by Momentum
+inline bool compareMomentum_d(const std::array<double, 4> &v1, const std::array<double, 4> &v2) {
   return (v1[3] < v2[3]);
 }
 
 class MDNorm {
 public:
-  MDNorm(const std::vector<double> &hX, const std::vector<double> &kX, const std::vector<double> &lX);
+  MDNorm(const std::vector<float> &hX, const std::vector<float> &kX, const std::vector<float> &lX);
   /**
    * Calculate the points of intersection for the given detector with cuboid
    * surrounding the detector position in HKL
@@ -39,10 +43,11 @@ public:
    * @param highvalue The highest momentum or energy transfer for the trajectory
    */
   template <typename histogram>
-  void calculateIntersections(histogram &h, std::vector<std::array<double, 4>> &intersections, const double theta,
-                              const double phi, const Eigen::Matrix3d &transform, double lowvalue, double highvalue) {
-    Eigen::Vector3d qout(std::sin(theta) * std::cos(phi), std::sin(theta) * std::sin(phi), std::cos(theta));
-    Eigen::Vector3d qin(0., 0., 1.);
+  void calculateIntersections(histogram &h, std::vector<std::array<float, 4>> &intersections, const float theta,
+                              const float phi, const Eigen::Matrix3f &transform, const float lowvalue,
+                              const float highvalue) {
+    Eigen::Vector3f qout(std::sin(theta) * std::cos(phi), std::sin(theta) * std::sin(phi), std::cos(theta));
+    Eigen::Vector3f qin(0., 0., 1.);
 
     qout = transform * qout;
     qin = transform * qin;
@@ -50,12 +55,11 @@ public:
     //  qout *= -1;
     //  qin *= -1;
     //}
-    double kfmin, kfmax, kimin, kimax;
     // if (m_diffraction) {
-    kimin = lowvalue;
-    kimax = highvalue;
-    kfmin = kimin;
-    kfmax = kimax;
+    float kimin = lowvalue;
+    float kimax = highvalue;
+    float kfmin = kimin;
+    float kfmax = kimax;
     //} else {
     //  kimin = std::sqrt(energyToK * m_Ei);
     //  kimax = kimin;
@@ -67,8 +71,8 @@ public:
     auto kNBins = static_cast<int64_t>(m_kX.size());
     auto lNBins = static_cast<int64_t>(m_lX.size());
 
-    double hStart = qin[0] * kimin - qout[0] * kfmin;
-    double hEnd = qin[0] * kimax - qout[0] * kfmax;
+    float hStart = qin[0] * kimin - qout[0] * kfmin;
+    float hEnd = qin[0] * kimax - qout[0] * kfmax;
 
     auto hStartIdx = h.axis(0).index(hStart);
     auto hEndIdx = h.axis(0).index(hEnd);
@@ -88,8 +92,8 @@ public:
       }
     }
 
-    double kStart = qin[1] * kimin - qout[1] * kfmin;
-    double kEnd = qin[1] * kimax - qout[1] * kfmax;
+    float kStart = qin[1] * kimin - qout[1] * kfmin;
+    float kEnd = qin[1] * kimax - qout[1] * kfmax;
 
     auto kStartIdx = h.axis(1).index(kStart);
     auto kEndIdx = h.axis(1).index(kEnd);
@@ -109,8 +113,8 @@ public:
       }
     }
 
-    double lStart = qin[2] * kimin - qout[2] * kfmin;
-    double lEnd = qin[2] * kimax - qout[2] * kfmax;
+    float lStart = qin[2] * kimin - qout[2] * kfmin;
+    float lEnd = qin[2] * kimax - qout[2] * kfmax;
     auto lStartIdx = h.axis(2).index(lStart);
     auto lEndIdx = h.axis(2).index(lEnd);
     if (lStartIdx > lEndIdx)
@@ -134,18 +138,18 @@ public:
 
     // calculate intersections with planes perpendicular to h
     {
-      double fmom = (kfmax - kfmin) / (hEnd - hStart);
-      double fk = (kEnd - kStart) / (hEnd - hStart);
-      double fl = (lEnd - lStart) / (hEnd - hStart);
+      float fmom = (kfmax - kfmin) / (hEnd - hStart);
+      float fk = (kEnd - kStart) / (hEnd - hStart);
+      float fl = (lEnd - lStart) / (hEnd - hStart);
       for (int i = hStartIdx; i < hEndIdx; ++i) {
-        double hi = m_hX[i];
+        float hi = m_hX[i];
         // if hi is between hStart and hEnd, then ki and li will be between
         // kStart, kEnd and lStart, lEnd and momi will be between kfmin and
         // kfmax
-        double ki = fk * (hi - hStart) + kStart;
-        double li = fl * (hi - hStart) + lStart;
+        float ki = fk * (hi - hStart) + kStart;
+        float li = fl * (hi - hStart) + lStart;
         if ((ki >= m_kX[0]) && (ki <= m_kX[kNBins - 1]) && (li >= m_lX[0]) && (li <= m_lX[lNBins - 1])) {
-          double momi = fmom * (hi - hStart) + kfmin;
+          float momi = fmom * (hi - hStart) + kfmin;
           intersections.push_back({{hi, ki, li, momi}});
         }
       }
@@ -153,18 +157,18 @@ public:
 
     // calculate intersections with planes perpendicular to k
     {
-      double fmom = (kfmax - kfmin) / (kEnd - kStart);
-      double fh = (hEnd - hStart) / (kEnd - kStart);
-      double fl = (lEnd - lStart) / (kEnd - kStart);
+      float fmom = (kfmax - kfmin) / (kEnd - kStart);
+      float fh = (hEnd - hStart) / (kEnd - kStart);
+      float fl = (lEnd - lStart) / (kEnd - kStart);
       for (auto i = kStartIdx; i < kEndIdx; ++i) {
-        double ki = m_kX[i];
+        float ki = m_kX[i];
         // if ki is between kStart and kEnd, then hi and li will be between
         // hStart, hEnd and lStart, lEnd and momi will be between kfmin and
         // kfmax
-        double hi = fh * (ki - kStart) + hStart;
-        double li = fl * (ki - kStart) + lStart;
+        float hi = fh * (ki - kStart) + hStart;
+        float li = fl * (ki - kStart) + lStart;
         if ((hi >= m_hX[0]) && (hi <= m_hX[hNBins - 1]) && (li >= m_lX[0]) && (li <= m_lX[lNBins - 1])) {
-          double momi = fmom * (ki - kStart) + kfmin;
+          float momi = fmom * (ki - kStart) + kfmin;
           intersections.push_back({{hi, ki, li, momi}});
         }
       }
@@ -172,16 +176,16 @@ public:
 
     // calculate intersections with planes perpendicular to l
     {
-      double fmom = (kfmax - kfmin) / (lEnd - lStart);
-      double fh = (hEnd - hStart) / (lEnd - lStart);
-      double fk = (kEnd - kStart) / (lEnd - lStart);
+      float fmom = (kfmax - kfmin) / (lEnd - lStart);
+      float fh = (hEnd - hStart) / (lEnd - lStart);
+      float fk = (kEnd - kStart) / (lEnd - lStart);
 
       for (auto i = lStartIdx; i < lEndIdx; ++i) {
-        double li = m_lX[i];
-        double hi = fh * (li - lStart) + hStart;
-        double ki = fk * (li - lStart) + kStart;
+        float li = m_lX[i];
+        float hi = fh * (li - lStart) + hStart;
+        float ki = fk * (li - lStart) + kStart;
         if ((hi >= m_hX[0]) && (hi <= m_hX[hNBins - 1]) && (ki >= m_kX[0]) && (ki <= m_kX[kNBins - 1])) {
-          double momi = fmom * (li - lStart) + kfmin;
+          float momi = fmom * (li - lStart) + kfmin;
           intersections.push_back({{hi, ki, li, momi}});
         }
       }
@@ -198,7 +202,7 @@ public:
     }
 
     // sort intersections by final momentum
-    std::sort(intersections.begin(), intersections.end(), compareMomentum);
+    std::sort(intersections.begin(), intersections.end(), compareMomentum_f);
   }
   /**
    * Calculate the normalization among intersections on a single detector
@@ -214,7 +218,7 @@ public:
    * @param bkgdSignalArray: (output) background normalization
    */
   template <typename histogram>
-  void calcSingleDetectorNorm(const std::vector<std::array<double, 4>> &intersections, const double &solid,
+  void calcSingleDetectorNorm(const std::vector<std::array<float, 4>> &intersections, const double &solid,
                               std::vector<double> &yValues, const size_t &vmdDims, std::vector<float> &pos,
                               std::vector<float> &posNew, histogram &h) {
 
@@ -266,5 +270,5 @@ public:
   }
 
 private:
-  std::vector<double> m_hX, m_kX, m_lX /*, m_eX*/;
+  std::vector<float> m_hX, m_kX, m_lX /*, m_eX*/;
 };

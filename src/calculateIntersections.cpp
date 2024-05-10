@@ -19,7 +19,7 @@ template <typename T, typename BinaryOp> void AtomicOp(std::atomic<T> &f, T d, B
   } while (!f.compare_exchange_weak(old, desired));
 }
 
-MDNorm::MDNorm(const std::vector<double> &hX, const std::vector<double> &kX, const std::vector<double> &lX)
+MDNorm::MDNorm(const std::vector<float> &hX, const std::vector<float> &kX, const std::vector<float> &lX)
     : m_hX(hX), m_kX(kX), m_lX(lX) {}
 
 /**
@@ -139,5 +139,5 @@ void MDNorm::calculateIntersections(std::vector<std::array<double, 4>> &intersec
   }
 
   // sort intersections by final momentum
-  std::sort(intersections.begin(), intersections.end(), compareMomentum);
+  std::sort(intersections.begin(), intersections.end(), compareMomentum_d);
 }
