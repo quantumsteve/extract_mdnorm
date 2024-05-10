@@ -64,6 +64,10 @@ public:
     //  kfmax = std::sqrt(energyToK * (m_Ei - lowvalue));
     //}
 
+    auto hNBins = m_hX.size();
+    auto kNBins = m_kX.size();
+    auto lNBins = m_lX.size();
+
     double hStart = qin[0] * kimin - qout[0] * kfmin;
     double hEnd = qin[0] * kimax - qout[0] * kfmax;
 
@@ -72,6 +76,18 @@ public:
     if (hStartIdx > hEndIdx)
       std::swap(hStartIdx, hEndIdx);
     ++hStartIdx;
+    hEndIdx = std::max(hStartIdx, hEndIdx);
+
+    if (hStartIdx > 0) {
+      if (auto hi = m_hX[hStartIdx - 1]; (hStart - hi) * (hEnd - hi) < 0) {
+        --hStartIdx;
+      }
+    }
+    if (hEndIdx < m_hX.size()) {
+      if (auto hi = m_hX[hEndIdx]; (hStart - hi) * (hEnd - hi) < 0) {
+        ++hEndIdx;
+      }
+    }
 
     double kStart = qin[1] * kimin - qout[1] * kfmin;
     double kEnd = qin[1] * kimax - qout[1] * kfmax;
@@ -81,6 +97,18 @@ public:
     if (kStartIdx > kEndIdx)
       std::swap(kStartIdx, kEndIdx);
     ++kStartIdx;
+    kEndIdx = std::max(kStartIdx, kEndIdx);
+
+    if (kStartIdx > 0) {
+      if (auto ki = m_kX[kStartIdx - 1]; (kStart - ki) * (kEnd - ki) < 0) {
+        --kStartIdx;
+      }
+    }
+    if (kEndIdx < m_kX.size()) {
+      if (auto ki = m_kX[kEndIdx]; (kStart - ki) * (kEnd - ki) < 0) {
+        ++kEndIdx;
+      }
+    }
 
     double lStart = qin[2] * kimin - qout[2] * kfmin;
     double lEnd = qin[2] * kimax - qout[2] * kfmax;
@@ -89,10 +117,19 @@ public:
     if (lStartIdx > lEndIdx)
       std::swap(lStartIdx, lEndIdx);
     ++lStartIdx;
+    lEndIdx = std::max(lStartIdx, lEndIdx);
 
-    auto hNBins = m_hX.size();
-    auto kNBins = m_kX.size();
-    auto lNBins = m_lX.size();
+    if (lStartIdx > 0) {
+      if (auto li = m_lX[lStartIdx - 1]; (lStart - li) * (lEnd - li) < 0) {
+        --lStartIdx;
+      }
+    }
+    if (lEndIdx < m_lX.size()) {
+      if (auto li = m_lX[lEndIdx]; (lStart - li) * (lEnd - li) < 0) {
+        ++lEndIdx;
+      }
+    }
+
     intersections.clear();
     intersections.reserve(hNBins + kNBins + lNBins + 2);
 

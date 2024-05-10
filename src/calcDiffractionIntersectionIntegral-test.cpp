@@ -227,14 +227,19 @@ TEST_CASE("calculateIntersections") {
     auto signal = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
                                       std::get<1>(axes), std::get<2>(axes));
 
-    std::vector<std::array<double, 4>> intersections;
+    std::vector<std::array<double, 4>> intersections, intersections2;
     std::vector<double> xValues, yValues;
     std::vector<float> pos, posNew;
-    auto start = std::chrono::high_resolution_clock::now();
+
+    std::vector<Eigen::Matrix3d> transforms;
     for (const Eigen::Matrix3d &op : symm) {
-      Eigen::Matrix3d transform4 = rotMatrix * m_UB * op * m_W;
-      Eigen::Matrix3d transform = transform4.inverse();
-#pragma omp parallel for private(intersections, xValues, yValues, pos, posNew)
+      Eigen::Matrix3d transform = rotMatrix * m_UB * op * m_W;
+      transforms.push_back(transform.inverse());
+    }
+
+    auto start = std::chrono::high_resolution_clock::now();
+#pragma omp parallel for collapse(2) private(intersections, xValues, yValues, pos, posNew)
+    for (const Eigen::Matrix3d &op : transforms) {
       for (size_t i = 0; i < ndets; ++i) {
         if (!use_dets[i])
           continue;
@@ -247,8 +252,10 @@ TEST_CASE("calculateIntersections") {
         else // masked detector in flux, but not in input workspace
           continue;
 
-        doctest.calculateIntersections(/*signal,*/ intersections, thetaValues[i], phiValues[i], transform, lowValues[i],
+        doctest.calculateIntersections(signal, intersections, thetaValues[i], phiValues[i], op, lowValues[i],
                                        highValues[i]);
+        // doctest.calculateIntersections(intersections2, thetaValues[i], phiValues[i], op, lowValues[i],
+        //                               highValues[i]);
 
         if (intersections.empty())
           continue;
@@ -302,13 +309,11 @@ TEST_CASE("calculateIntersections") {
 
     start = std::chrono::high_resolution_clock::now();
 
-    for (const Eigen::Matrix3d &op : symm) {
-      Eigen::Matrix3d transform4 = rotMatrix * m_UB * op * m_W;
-      Eigen::Matrix3d transform = transform4.inverse();
-#pragma omp parallel for
+#pragma omp parallel for collapse(2)
+    for (const Eigen::Matrix3d &op : transforms) {
       for (auto &val : events) {
         Eigen::Vector3d v(val[5], val[6], val[7]);
-        v = transform * v;
+        v = op * v;
         h(v[0], v[1], v[2], weight(val[0]));
       }
     }
