@@ -13,9 +13,8 @@
  * @param yValues :: A vector to save the results.
  */
 void calcIntegralsForIntersections(const std::vector<double> &xValues,
-		                               const std::vector<std::vector<double>> &integrFlux_x,
-				                           const std::vector<std::vector<double>> &integrFlux_y,
-                                   const size_t sp,
+                                   const std::vector<std::vector<double>> &integrFlux_x,
+                                   const std::vector<std::vector<double>> &integrFlux_y, const size_t sp,
                                    std::vector<double> &yValues) {
 
   assert(xValues.size() == yValues.size());
@@ -85,9 +84,8 @@ void calcIntegralsForIntersections(const std::vector<double> &xValues,
  */
 void calcDiffractionIntersectionIntegral(std::vector<std::array<double, 4>> &intersections,
                                          std::vector<double> &xValues, std::vector<double> &yValues,
-                                         const std::vector<std::vector<double>> &integrFlux_x, 
-			                                   const std::vector<std::vector<double>> &integrFlux_y,
-                                         const size_t wsIdx) {
+                                         const std::vector<std::vector<double>> &integrFlux_x,
+                                         const std::vector<std::vector<double>> &integrFlux_y, const size_t wsIdx) {
   // -- calculate integrals for the intersection --
   // momentum values at intersections
   auto intersectionsBegin = intersections.begin();
@@ -103,4 +101,3 @@ void calcDiffractionIntersectionIntegral(std::vector<std::array<double, 4>> &int
   // of workspace integrFlux. The result is stored in yValues
   calcIntegralsForIntersections(xValues, integrFlux_x, integrFlux_y, wsIdx, yValues);
 }
-

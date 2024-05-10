@@ -26,9 +26,8 @@ public:
    * @param lowvalue The lowest momentum or energy transfer for the trajectory
    * @param highvalue The highest momentum or energy transfer for the trajectory
    */
-  void calculateIntersections(std::vector<std::array<double, 4>> &intersections, double theta,
-                              double phi, const Eigen::Matrix3d &transform, double lowvalue,
-                              double highvalue);
+  void calculateIntersections(std::vector<std::array<double, 4>> &intersections, double theta, double phi,
+                              const Eigen::Matrix3d &transform, double lowvalue, double highvalue);
   /**
    * Calculate the points of intersection for the given detector with cuboid
    * surrounding the detector position in HKL
@@ -64,9 +63,9 @@ public:
     //  kfmax = std::sqrt(energyToK * (m_Ei - lowvalue));
     //}
 
-    auto hNBins = m_hX.size();
-    auto kNBins = m_kX.size();
-    auto lNBins = m_lX.size();
+    auto hNBins = static_cast<int64_t>(m_hX.size());
+    auto kNBins = static_cast<int64_t>(m_kX.size());
+    auto lNBins = static_cast<int64_t>(m_lX.size());
 
     double hStart = qin[0] * kimin - qout[0] * kfmin;
     double hEnd = qin[0] * kimax - qout[0] * kfmax;
@@ -83,7 +82,7 @@ public:
         --hStartIdx;
       }
     }
-    if (hEndIdx < m_hX.size()) {
+    if (hEndIdx < hNBins) {
       if (auto hi = m_hX[hEndIdx]; (hStart - hi) * (hEnd - hi) < 0) {
         ++hEndIdx;
       }
@@ -104,7 +103,7 @@ public:
         --kStartIdx;
       }
     }
-    if (kEndIdx < m_kX.size()) {
+    if (kEndIdx < kNBins) {
       if (auto ki = m_kX[kEndIdx]; (kStart - ki) * (kEnd - ki) < 0) {
         ++kEndIdx;
       }
@@ -124,7 +123,7 @@ public:
         --lStartIdx;
       }
     }
-    if (lEndIdx < m_lX.size()) {
+    if (lEndIdx < lNBins) {
       if (auto li = m_lX[lEndIdx]; (lStart - li) * (lEnd - li) < 0) {
         ++lEndIdx;
       }

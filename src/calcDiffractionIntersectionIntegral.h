@@ -17,6 +17,4 @@
 void calcDiffractionIntersectionIntegral(std::vector<std::array<double, 4>> &intersections,
                                          std::vector<double> &xValues, std::vector<double> &yValues,
                                          const std::vector<std::vector<double>> &integrFlux_x,
-					                     const std::vector<std::vector<double>> &integrFlux_y,
-                                         const size_t wsIndx);
-
+                                         const std::vector<std::vector<double>> &integrFlux_y, const size_t wsIndx);

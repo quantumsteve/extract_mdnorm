@@ -1,8 +1,8 @@
-#include "calculateIntersections.h"
 #include "calcDiffractionIntersectionIntegral.h"
+#include "calculateIntersections.h"
 
-#include "validation_data_filepath.h"
 #include "catch2/catch_all.hpp"
+#include "validation_data_filepath.h"
 
 #include <boost/histogram.hpp>
 #include <highfive/eigen.hpp>
@@ -69,18 +69,18 @@ TEST_CASE("calculateIntersections") {
     std::unordered_map<int32_t, size_t> fluxDetToIdx;
     std::unordered_map<int32_t, size_t> solidAngDetToIdx;
 
-    std::vector<std::vector<double>> solidAngleWS; 
+    std::vector<std::vector<double>> solidAngleWS;
     HighFive::File sa_file(SA_NXS, HighFive::File::ReadOnly);
     HighFive::Group sa_group = sa_file.getGroup("mantid_workspace_1");
     HighFive::Group sa_group2 = sa_group.getGroup("workspace");
     HighFive::DataSet sa_dataset = sa_group2.getDataSet("values");
     std::vector<size_t> dims = sa_dataset.getDimensions();
     REQUIRE(dims.size() == 2);
-    REQUIRE(dims[1] == 1); 
+    REQUIRE(dims[1] == 1);
     std::vector<double> read_data;
     sa_dataset.read(read_data);
-    
-    for(const double value: read_data)
+
+    for (const double value : read_data)
       solidAngleWS.push_back({value});
 
     sa_group2 = sa_group.getGroup("instrument");
@@ -111,7 +111,7 @@ TEST_CASE("calculateIntersections") {
     dataset.read(read_data);
     REQUIRE(dims.size() == 1);
     std::vector<std::vector<double>> integrFlux_x{1}, integrFlux_y{1};
-    for(size_t j = 0; j < dims[0]; ++j)
+    for (size_t j = 0; j < dims[0]; ++j)
       integrFlux_x[0].push_back(read_data[j]);
 
     dataset = group2.getDataSet("values");
@@ -120,7 +120,7 @@ TEST_CASE("calculateIntersections") {
 
     REQUIRE(dims.size() == 2);
     REQUIRE(dims[0] == 1);
-    for(size_t j = 0; j < dims[1]; ++j)
+    for (size_t j = 0; j < dims[1]; ++j)
       integrFlux_y[0].push_back(read_data[j]);
 
     group2 = group.getGroup("instrument");
@@ -150,7 +150,7 @@ TEST_CASE("calculateIntersections") {
 
     std::vector<bool> use_dets;
     std::ifstream dets_strm(USE_DETS_FILE);
-    for(size_t i = 0;i < ndets;++i) {
+    for (size_t i = 0; i < ndets; ++i) {
       REQUIRE(!dets_strm.eof());
       bool value{false};
       dets_strm >> value;
@@ -194,8 +194,8 @@ TEST_CASE("calculateIntersections") {
     REQUIRE(dims[0] == 372736);
     dataset.read(thetaValues);
 
-    for(auto &value : thetaValues)
-      value = value * M_PI/180.;
+    for (auto &value : thetaValues)
+      value = value * M_PI / 180.;
 
     dataset = event_group4.getDataSet("azimuthal_angle");
     dims = dataset.getDimensions();
@@ -203,8 +203,8 @@ TEST_CASE("calculateIntersections") {
     REQUIRE(dims[0] == 372736);
     dataset.read(phiValues);
 
-    for(auto &value: phiValues)
-      value = value * M_PI/180.;
+    for (auto &value : phiValues)
+      value = value * M_PI / 180.;
 
     std::vector<int> detIDs;
     dataset = event_group4.getDataSet("detector_number");
@@ -254,8 +254,6 @@ TEST_CASE("calculateIntersections") {
 
         doctest.calculateIntersections(signal, intersections, thetaValues[i], phiValues[i], op, lowValues[i],
                                        highValues[i]);
-        // doctest.calculateIntersections(intersections2, thetaValues[i], phiValues[i], op, lowValues[i],
-        //                               highValues[i]);
 
         if (intersections.empty())
           continue;
@@ -296,10 +294,10 @@ TEST_CASE("calculateIntersections") {
     double max_signal = *std::max_element(signal.begin(), signal.end());
 
     double ref_max{0.};
-    for(size_t i = 0; i < dims[1];++i) {
-      for(size_t j = 0; j < dims[2];++j) {
+    for (size_t i = 0; i < dims[1]; ++i) {
+      for (size_t j = 0; j < dims[2]; ++j) {
         REQUIRE_THAT(data2d[i][j], Catch::Matchers::WithinAbs(signal.at(j, i, 0), 5.e+05));
-        ref_max = std::max(ref_max,data2d[i][j]);
+        ref_max = std::max(ref_max, data2d[i][j]);
       }
     }
     REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));

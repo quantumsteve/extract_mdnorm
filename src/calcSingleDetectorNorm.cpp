@@ -1,16 +1,15 @@
 #include "calcSingleDetectorNorm.h"
 
-#include<algorithm>
-#include <iostream>
+#include <algorithm>
 #include <cassert>
+#include <iostream>
 /** Uses std::compare_exchange_weak to update the atomic value f = op(f, d)
  * Used to improve parallel scaling in algorithms MDNormDirectSC and MDNormSCD
  * @param f atomic variable being updated
  * @param d second element in binary operation
  * @param op binary operation on elements f and d
  */
-template <typename T, typename BinaryOp>
-void AtomicOp(std::atomic<T> &f, T d, BinaryOp op) {
+template <typename T, typename BinaryOp> void AtomicOp(std::atomic<T> &f, T d, BinaryOp op) {
   T old = f.load();
   T desired;
   do {
@@ -22,9 +21,9 @@ void SetUpIndexMaker(const size_t numDims, size_t *out, const size_t *index_max)
   // Allocate and start at 1
   for (size_t d = 0; d < numDims; d++)
     out[d] = 1;
- 
+
   for (size_t d = 1; d < numDims; d++)
-    out[d] = out[d - 1] * index_max[d - 1];  
+    out[d] = out[d - 1] * index_max[d - 1];
 }
 
 size_t getLinearIndexAtCoord(const float *coords) {
@@ -32,7 +31,7 @@ size_t getLinearIndexAtCoord(const float *coords) {
   size_t linearIndex = 0;
   float m_origin[3] = {-10., -10, -0.1};
   float m_boxLength[3] = {0.1, 0.1, 0.2};
-  size_t m_indexMax[3] = {200,200,1};
+  size_t m_indexMax[3] = {200, 200, 1};
   size_t m_indexMaker[3]{0};
 
   SetUpIndexMaker(3, m_indexMaker, m_indexMax);
@@ -40,7 +39,7 @@ size_t getLinearIndexAtCoord(const float *coords) {
   for (size_t d = 0; d < 3; d++) {
     float x = coords[d] - m_origin[d];
     auto ix = size_t(x / m_boxLength[d]);
-    assert(x>=0.f);
+    assert(x >= 0.f);
     if (ix >= m_indexMax[d] || (x < 0)) {
       return size_t(-1);
     }
@@ -48,7 +47,6 @@ size_t getLinearIndexAtCoord(const float *coords) {
   }
   return linearIndex;
 }
-
 
 /**
  * Calculate the normalization among intersections on a single detector
@@ -64,9 +62,8 @@ size_t getLinearIndexAtCoord(const float *coords) {
  * @param bkgdSignalArray: (output) background normalization
  */
 void calcSingleDetectorNorm(const std::vector<std::array<double, 4>> &intersections, const double &solid,
-                                           std::vector<double> &yValues, const size_t &vmdDims,
-                                           std::vector<float> &pos, std::vector<float> &posNew,
-                                           std::vector<std::atomic<double>> &signalArray) {
+                            std::vector<double> &yValues, const size_t &vmdDims, std::vector<float> &pos,
+                            std::vector<float> &posNew, std::vector<std::atomic<double>> &signalArray) {
 
   auto intersectionsBegin = intersections.begin();
   for (auto it = intersectionsBegin + 1; it != intersections.end(); ++it) {
@@ -96,15 +93,14 @@ void calcSingleDetectorNorm(const std::vector<std::array<double, 4>> &intersecti
     signal = (yValues[k] - yValues[k - 1]) * solid;
 
     // Find the coordiate of the new position after transformation
-    
-    //m_transformation.multiplyPoint(pos, posNew); (identify matrix)
-    std::copy(std::begin(pos),std::end(pos),std::begin(posNew));
-    
+
+    // m_transformation.multiplyPoint(pos, posNew); (identify matrix)
+    std::copy(std::begin(pos), std::end(pos), std::begin(posNew));
 
     // [Task 89] Is linIndex common to both sample and background?
     size_t linIndex = getLinearIndexAtCoord(posNew.data());
 
-    //std::cout << posNew[0] << " " << posNew[1] << " " << posNew[2] << " " << linIndex << std::endl;
+    // std::cout << posNew[0] << " " << posNew[1] << " " << posNew[2] << " " << linIndex << std::endl;
 
     if (linIndex == size_t(-1))
       continue; // not found

@@ -20,8 +20,7 @@ template <typename T, typename BinaryOp> void AtomicOp(std::atomic<T> &f, T d, B
 }
 
 MDNorm::MDNorm(const std::vector<double> &hX, const std::vector<double> &kX, const std::vector<double> &lX)
-    : m_hX(hX), m_kX(kX), m_lX(lX) {
-}
+    : m_hX(hX), m_kX(kX), m_lX(lX) {}
 
 /**
  * Calculate the points of intersection for the given detector with cuboid
@@ -41,12 +40,12 @@ void MDNorm::calculateIntersections(std::vector<std::array<double, 4>> &intersec
 
   qout = transform * qout;
   qin = transform * qin;
-  //if (convention == "Crystallography") {
+  // if (convention == "Crystallography") {
   //  qout *= -1;
   //  qin *= -1;
   //}
   double kfmin, kfmax, kimin, kimax;
-  //if (m_diffraction) {
+  // if (m_diffraction) {
   kimin = lowvalue;
   kimax = highvalue;
   kfmin = kimin;

@@ -1,8 +1,8 @@
-#include "calculateIntersections.h"
 #include "calcDiffractionIntersectionIntegral.h"
+#include "calculateIntersections.h"
 
-#include "validation_data_filepath.h"
 #include "catch2/catch_all.hpp"
+#include "validation_data_filepath.h"
 
 #include <boost/histogram.hpp>
 #include <highfive/eigen.hpp>
@@ -70,20 +70,19 @@ TEST_CASE("calculateIntersections") {
     std::unordered_map<int32_t, size_t> fluxDetToIdx;
     std::unordered_map<int32_t, size_t> solidAngDetToIdx;
 
-    std::vector<std::vector<double>> solidAngleWS; 
+    std::vector<std::vector<double>> solidAngleWS;
     HighFive::File sa_file(GARNET_SA_NXS, HighFive::File::ReadOnly);
     HighFive::Group sa_group = sa_file.getGroup("mantid_workspace_1");
     HighFive::Group sa_group2 = sa_group.getGroup("workspace");
     HighFive::DataSet sa_dataset = sa_group2.getDataSet("values");
     std::vector<size_t> dims = sa_dataset.getDimensions();
     REQUIRE(dims.size() == 2);
-    REQUIRE(dims[1] == 1); 
-    //std::vector<std::vector<double>> read_data_v;
+    REQUIRE(dims[1] == 1);
+    // std::vector<std::vector<double>> read_data_v;
     sa_dataset.read(solidAngleWS);
-     
-    //for(const double value: read_data)
-    //  solidAngleWS.push_back({value});
 
+    // for(const double value: read_data)
+    //  solidAngleWS.push_back({value});
 
     sa_group2 = sa_group.getGroup("instrument");
     HighFive::Group sa_group3 = sa_group2.getGroup("detector");
@@ -114,7 +113,7 @@ TEST_CASE("calculateIntersections") {
     std::vector<double> read_data;
     dataset.read(read_data);
     std::vector<std::vector<double>> integrFlux_x{1}, integrFlux_y{1};
-    for(size_t j = 0; j < dims[0]; ++j)
+    for (size_t j = 0; j < dims[0]; ++j)
       integrFlux_x[0].push_back(read_data[j]);
 
     dataset = group2.getDataSet("values");
@@ -122,7 +121,7 @@ TEST_CASE("calculateIntersections") {
     REQUIRE(dims.size() == 2);
     REQUIRE(dims[0] == 75);
     dataset.read(integrFlux_y);
-    REQUIRE(integrFlux_y.size()==75);
+    REQUIRE(integrFlux_y.size() == 75);
     /*REQUIRE(dims.size() == 2);
     REQUIRE(dims[0] == 1);
     for(size_t j = 0; j < dims[1]; ++j)
@@ -199,8 +198,8 @@ TEST_CASE("calculateIntersections") {
     REQUIRE(dims[0] == 372736);
     dataset.read(thetaValues);
 
-    for(auto &value : thetaValues)
-      value = value * M_PI/180.;
+    for (auto &value : thetaValues)
+      value = value * M_PI / 180.;
 
     dataset = event_group4.getDataSet("azimuthal_angle");
     dims = dataset.getDimensions();
@@ -208,8 +207,8 @@ TEST_CASE("calculateIntersections") {
     REQUIRE(dims[0] == 372736);
     dataset.read(phiValues);
 
-    for(auto &value: phiValues)
-      value = value * M_PI/180.;
+    for (auto &value : phiValues)
+      value = value * M_PI / 180.;
 
     std::vector<int> detIDs;
     dataset = event_group4.getDataSet("detector_number");
@@ -246,7 +245,7 @@ TEST_CASE("calculateIntersections") {
 #pragma omp parallel for collapse(2) private(intersections, xValues, yValues, pos, posNew)
     for (const Eigen::Matrix3d &op : transforms) {
       for (size_t i = 0; i < ndets; ++i) {
-        //if (!use_dets[i])
+        // if (!use_dets[i])
         //  continue;
 
         int32_t detID = detIDs[i];
@@ -299,13 +298,13 @@ TEST_CASE("calculateIntersections") {
     double max_signal = *std::max_element(signal.begin(), signal.end());
 
     double ref_max{0.};
-    for(size_t i = 0; i < dims[1];++i) {
-      for(size_t j = 0; j < dims[2];++j) {
-        //REQUIRE_THAT(data2d[i][j], Catch::Matchers::WithinAbs(signal.at(j, i, 0), 5.e+05));
-        ref_max = std::max(ref_max,data2d[i][j]);
+    for (size_t i = 0; i < dims[1]; ++i) {
+      for (size_t j = 0; j < dims[2]; ++j) {
+        // REQUIRE_THAT(data2d[i][j], Catch::Matchers::WithinAbs(signal.at(j, i, 0), 5.e+05));
+        ref_max = std::max(ref_max, data2d[i][j]);
       }
     }
-    //REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));
+    // REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));
 
     auto h = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
                                  std::get<1>(axes), std::get<2>(axes));
