@@ -228,8 +228,6 @@ TEST_CASE("calculateIntersections") {
     dataset = event_group2.getDataSet("event_data");
     dataset.read(events);
 
-    const size_t vmdDims = 3;
-
     auto signal = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
                                       std::get<1>(axes), std::get<2>(axes));
 
