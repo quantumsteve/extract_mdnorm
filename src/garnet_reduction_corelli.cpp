@@ -103,8 +103,6 @@ TEST_CASE("calculateIntersections") {
       ++idx;
     }
 
-    bool haveSA{true};
-
     HighFive::File file(GARNET_FLUX_NXS, HighFive::File::ReadOnly);
     HighFive::Group group = file.getGroup("mantid_workspace_1");
     HighFive::Group group2 = group.getGroup("workspace");
@@ -263,11 +261,8 @@ TEST_CASE("calculateIntersections") {
           continue;
 
         // Get solid angle for this contribution
-        double solid = protonCharge;
-        if (haveSA) {
-          double solid_angle_factor = solidAngleWS[solidAngDetToIdx.find(detID)->second][0];
-          solid *= solid_angle_factor;
-        }
+        double solid_angle_factor = solidAngleWS[solidAngDetToIdx.find(detID)->second][0];
+        double solid = protonCharge * solid_angle_factor;
 
         calcDiffractionIntersectionIntegral(intersections, xValues, yValues, integrFlux_x, integrFlux_y, wsIdx);
 
