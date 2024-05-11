@@ -226,16 +226,15 @@ TEST_CASE("calculateIntersections") {
     auto signal = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
                                       std::get<1>(axes), std::get<2>(axes));
 
-    std::vector<std::array<float, 4>> intersections;
-    std::vector<float> xValues;
-    std::vector<double> yValues;
-
     std::vector<Eigen::Matrix3f> transforms;
     for (const Eigen::Matrix3f &op : symm) {
       Eigen::Matrix3f transform = rotMatrix * m_UB * op * m_W;
       transforms.push_back(transform.inverse());
     }
 
+    std::vector<std::array<float, 4>> intersections;
+    std::vector<float> xValues;
+    std::vector<double> yValues;
     auto start = std::chrono::high_resolution_clock::now();
 #pragma omp parallel for collapse(2) private(intersections, xValues, yValues)
     for (const Eigen::Matrix3f &op : transforms) {

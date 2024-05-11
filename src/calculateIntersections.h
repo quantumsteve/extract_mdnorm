@@ -250,14 +250,6 @@ public:
       // m_transformation.multiplyPoint(pos, posNew); (identify matrix)
       // std::copy(std::begin(pos), std::end(pos), std::begin(posNew));
 
-      // [Task 89] Is linIndex common to both sample and background?
-      // size_t linIndex = this->getLinearIndexAtCoord(posNew.data());
-
-      // std::cout << posNew[0] << " " << posNew[1] << " " << posNew[2] << " " << linIndex << std::endl;
-
-      // if (linIndex == size_t(-1))
-      //  continue; // not found
-
       using namespace boost::histogram;
       // Set to output
       // set the calculated signal to

@@ -261,7 +261,7 @@ TEST_CASE("calculateIntersections") {
           continue;
 
         // Get solid angle for this contribution
-        double solid_angle_factor = solidAngleWS[solidAngDetToIdx.find(detID)->second][0];
+        const double solid_angle_factor = solidAngleWS[solidAngDetToIdx.find(detID)->second][0];
         double solid = protonCharge * solid_angle_factor;
 
         calcDiffractionIntersectionIntegral(intersections, xValues, yValues, integrFlux_x, integrFlux_y, wsIdx);
