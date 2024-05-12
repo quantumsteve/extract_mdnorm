@@ -1,5 +1,7 @@
 #include "calcDiffractionIntersectionIntegral.h"
 
+#include <boost/histogram.hpp>
+
 #include <cassert>
 #include <cmath>
 #include <iostream>
@@ -59,17 +61,19 @@ void calcIntegralsForIntersections(const std::vector<float> &xValues,
     --iMax;
   }
 
-  size_t j = 1;
+  using namespace boost::histogram;
+  using reg = axis::regular<float>;
+  reg axes(xData.size() - 1, xStart, xEnd, "x");
+  double inv_step = 1. / (xData[1] - xData[0]);
+
   for (; i <= iMax; ++i) {
     double xi = xValues[i];
-    while (xi > xData[j])
-      ++j;
+    int j = axes.index(xi);
     // interpolate between the consecutive points
-    double x0 = xData[j - 1];
-    double x1 = xData[j];
-    double y0 = yData[j - 1];
-    double y1 = yData[j];
-    yValues[i] = std::lerp(y0, y1, (xi - x0) / (x1 - x0));
+    double x0 = axes.bin(j).lower();
+    double y0 = yData[j];
+    double y1 = yData[j + 1];
+    yValues[i] = std::lerp(y0, y1, (xi - x0) * inv_step);
   }
 }
 
