@@ -65,6 +65,10 @@ TEST_CASE("calculateIntersections") {
     rot_dataset = rot_file.getDataSet("ubmatrix");
     auto m_UB = rot_dataset.read<Eigen::Matrix3f>();
 
+    std::vector<bool> skip_dets;
+    rot_dataset = rot_file.getDataSet("skip_dets");
+    rot_dataset.read(skip_dets);
+
     Eigen::Matrix3f m_W;
     m_W << 1.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 1.f;
 
@@ -241,8 +245,8 @@ TEST_CASE("calculateIntersections") {
 #pragma omp parallel for collapse(2) private(intersections, xValues, yValues)
     for (const Eigen::Matrix3f &op : transforms) {
       for (size_t i = 0; i < ndets; ++i) {
-        // if (!use_dets[i])
-        //  continue;
+        if (skip_dets[i])
+          continue;
 
         int32_t detID = detIDs[i];
         // get the flux spectrum number: this is for diffraction only!
@@ -267,7 +271,6 @@ TEST_CASE("calculateIntersections") {
         doctest.calcSingleDetectorNorm(intersections, solid, yValues, signal);
       }
     }
-
     auto stop = std::chrono::high_resolution_clock::now();
     double duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stop - start).count();
     std::cout << " time: " << duration_total << "s\n";

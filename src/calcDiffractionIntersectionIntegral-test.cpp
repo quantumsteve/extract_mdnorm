@@ -64,6 +64,10 @@ TEST_CASE("calculateIntersections") {
     rot_dataset = rot_file.getDataSet("ubmatrix");
     auto m_UB = rot_dataset.read<Eigen::Matrix3f>();
 
+    std::vector<bool> skip_dets;
+    rot_dataset = rot_file.getDataSet("skip_dets");
+    rot_dataset.read(skip_dets);
+
     Eigen::Matrix3f m_W;
     m_W << 1.f, 1.f, 0.f, 1.f, -1.f, 0.f, 0.f, 0.f, 1.f;
 
@@ -148,16 +152,6 @@ TEST_CASE("calculateIntersections") {
     size_t ndets;
     dataset.read(ndets);
 
-    std::vector<bool> use_dets;
-    std::ifstream dets_strm(USE_DETS_FILE);
-    for (size_t i = 0; i < ndets; ++i) {
-      REQUIRE(!dets_strm.eof());
-      bool value{false};
-      dets_strm >> value;
-      REQUIRE(value == true);
-      use_dets.push_back(value);
-    }
-
     std::vector<float> lowValues, highValues;
 
     HighFive::File event_file(EVENT_NXS, HighFive::File::ReadOnly);
@@ -238,7 +232,7 @@ TEST_CASE("calculateIntersections") {
 #pragma omp parallel for collapse(2) private(intersections, xValues, yValues)
     for (const Eigen::Matrix3f &op : transforms) {
       for (size_t i = 0; i < ndets; ++i) {
-        if (!use_dets[i])
+        if (skip_dets[i])
           continue;
 
         int32_t detID = detIDs[i];
