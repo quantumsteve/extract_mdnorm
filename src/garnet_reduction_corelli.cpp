@@ -111,9 +111,7 @@ TEST_CASE("calculateIntersections") {
     REQUIRE(dims.size() == 1);
     std::vector<double> read_data;
     dataset.read(read_data);
-    std::vector<std::vector<float>> integrFlux_x{1};
-    for (size_t j = 0; j < dims[0]; ++j)
-      integrFlux_x[0].push_back(read_data[j]);
+    reg integrFlux_x(read_data.size() - 1, read_data.front(), read_data.back(), "integrFlux_x");
 
     dataset = group2.getDataSet("values");
     dims = dataset.getDimensions();

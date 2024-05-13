@@ -47,25 +47,15 @@ public:
                               const float phi, const Eigen::Matrix3f &transform, const float lowvalue,
                               const float highvalue) {
     Eigen::Vector3f qout(std::sin(theta) * std::cos(phi), std::sin(theta) * std::sin(phi), std::cos(theta));
-    Eigen::Vector3f qin(0., 0., 1.);
+    Eigen::Vector3f qin(0.f, 0.f, 1.f);
 
     qout = transform * qout;
     qin = transform * qin;
-    // if (convention == "Crystallography") {
-    //  qout *= -1;
-    //  qin *= -1;
-    //}
-    // if (m_diffraction) {
+
     float kimin = lowvalue;
     float kimax = highvalue;
     float kfmin = kimin;
     float kfmax = kimax;
-    //} else {
-    //  kimin = std::sqrt(energyToK * m_Ei);
-    //  kimax = kimin;
-    //  kfmin = std::sqrt(energyToK * (m_Ei - highvalue));
-    //  kfmax = std::sqrt(energyToK * (m_Ei - lowvalue));
-    //}
 
     auto hNBins = static_cast<int64_t>(m_hX.size());
     auto kNBins = static_cast<int64_t>(m_kX.size());

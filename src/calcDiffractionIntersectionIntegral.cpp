@@ -15,16 +15,16 @@
  * @param yValues :: A vector to save the results.
  */
 void calcIntegralsForIntersections(const std::vector<float> &xValues,
-                                   const std::vector<std::vector<float>> &integrFlux_x,
+                                   const boost::histogram::axis::regular<float> &integrFlux_x,
                                    const std::vector<std::vector<double>> &integrFlux_y, const size_t sp,
                                    std::vector<double> &yValues) {
 
   assert(xValues.size() == yValues.size());
 
   // the x-data from the workspace
-  const auto &xData = integrFlux_x[0];
-  const double xStart = xData.front();
-  const double xEnd = xData.back();
+  const float xStart = integrFlux_x.bin(0).lower();
+  const float xEnd = integrFlux_x.bin(integrFlux_x.size()).upper();
+  const float inv_step = 1.f / integrFlux_x.bin(0).width();
 
   // the values in integrFlux are expected to be integrals of a non-negative
   // function
@@ -47,34 +47,25 @@ void calcIntegralsForIntersections(const std::vector<float> &xValues,
     return;
   }
 
-  size_t i = 0;
   // integrals below xStart must be 0
-  while (i < nData - 1 && xValues[i] <= xStart) {
-    yValues[i] = yMin;
-    ++i;
-  }
+  auto it = std::upper_bound(xValues.begin(), xValues.end(), xStart);
+  auto i = std::distance(xValues.begin(), it);
+  std::fill_n(yValues.begin(), i, yMin);
 
-  size_t iMax = nData - 1;
-  // integrals above xEnd must be yMax
-  while (iMax > i && xValues[iMax] >= xEnd) {
-    yValues[iMax] = yMax;
-    --iMax;
-  }
+  it = std::upper_bound(it, xValues.end(), xEnd);
+  auto iMax = std::distance(xValues.begin(), it);
 
-  using namespace boost::histogram;
-  using reg = axis::regular<float>;
-  reg axes(xData.size() - 1, xStart, xEnd, "x");
-  double inv_step = 1. / (xData[1] - xData[0]);
-
-  for (; i <= iMax; ++i) {
-    double xi = xValues[i];
-    int j = axes.index(xi);
+  for (; i < iMax; ++i) {
+    float xi = xValues[i];
+    auto j = integrFlux_x.index(xi);
     // interpolate between the consecutive points
-    double x0 = axes.bin(j).lower();
+    float x0 = integrFlux_x.bin(j).lower();
     double y0 = yData[j];
     double y1 = yData[j + 1];
     yValues[i] = std::lerp(y0, y1, (xi - x0) * inv_step);
   }
+
+  std::fill(yValues.begin() + iMax, yValues.end(), yMax);
 }
 
 /**
@@ -88,16 +79,14 @@ void calcIntegralsForIntersections(const std::vector<float> &xValues,
  */
 void calcDiffractionIntersectionIntegral(std::vector<std::array<float, 4>> &intersections, std::vector<float> &xValues,
                                          std::vector<double> &yValues,
-                                         const std::vector<std::vector<float>> &integrFlux_x,
+                                         const boost::histogram::axis::regular<float> &integrFlux_x,
                                          const std::vector<std::vector<double>> &integrFlux_y, const size_t wsIdx) {
   // -- calculate integrals for the intersection --
-  // momentum values at intersections
-  auto intersectionsBegin = intersections.begin();
   // copy momenta to xValues
   xValues.resize(intersections.size());
   yValues.resize(intersections.size());
   auto x = xValues.begin();
-  for (auto it = intersectionsBegin; it != intersections.end(); ++it, ++x) {
+  for (auto it = intersections.begin(); it != intersections.end(); ++it, ++x) {
     *x = (*it)[3];
   }
   // calculate integrals at momenta from xValues by interpolating between

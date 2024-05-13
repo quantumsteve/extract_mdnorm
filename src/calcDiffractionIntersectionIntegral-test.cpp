@@ -110,9 +110,8 @@ TEST_CASE("calculateIntersections") {
     std::vector<float> read_data_f;
     dataset.read(read_data_f);
     REQUIRE(dims.size() == 1);
-    std::vector<std::vector<float>> integrFlux_x{1};
-    for (size_t j = 0; j < dims[0]; ++j)
-      integrFlux_x[0].push_back(read_data_f[j]);
+    const reg integrFlux_x(read_data_f.size() - 1, read_data_f.front(), read_data_f.back(), "integrFlux_x");
+    REQUIRE_THAT(integrFlux_x.bin(0).width(), Catch::Matchers::WithinAbs(read_data_f[1] - read_data_f[0], 1e-4));
 
     dataset = group2.getDataSet("values");
     dims = dataset.getDimensions();
