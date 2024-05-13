@@ -83,11 +83,7 @@ TEST_CASE("calculateIntersections") {
     std::vector<size_t> dims = sa_dataset.getDimensions();
     REQUIRE(dims.size() == 2);
     REQUIRE(dims[1] == 1);
-    // std::vector<std::vector<double>> read_data_v;
     sa_dataset.read(solidAngleWS);
-
-    // for(const double value: read_data)
-    //  solidAngleWS.push_back({value});
 
     sa_group2 = sa_group.getGroup("instrument");
     HighFive::Group sa_group3 = sa_group2.getGroup("detector");
@@ -124,10 +120,6 @@ TEST_CASE("calculateIntersections") {
     std::vector<std::vector<double>> integrFlux_y{1};
     dataset.read(integrFlux_y);
     REQUIRE(integrFlux_y.size() == 75);
-    /*REQUIRE(dims.size() == 2);
-    REQUIRE(dims[0] == 1);
-    for(size_t j = 0; j < dims[1]; ++j)
-      integrFlux_y[0].push_back(read_data[j]);*/
 
     group2 = group.getGroup("instrument");
     HighFive::Group group3 = group2.getGroup("detector");
@@ -153,16 +145,6 @@ TEST_CASE("calculateIntersections") {
     REQUIRE(dims[0] == 1);
     size_t ndets;
     dataset.read(ndets);
-
-    /*std::vector<bool> use_dets;
-    std::ifstream dets_strm(USE_DETS_FILE);
-    for(size_t i = 0;i < ndets;++i) {
-      REQUIRE(!dets_strm.eof());
-      bool value{false};
-      dets_strm >> value;
-      REQUIRE(value == true);
-      use_dets.push_back(value);
-    }*/
 
     std::vector<float> lowValues, highValues;
 
