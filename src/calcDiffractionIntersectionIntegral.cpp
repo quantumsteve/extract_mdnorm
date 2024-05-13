@@ -23,8 +23,6 @@ void calcIntegralsForIntersections(const std::vector<float> &xValues,
 
   // the x-data from the workspace
   const float xStart = integrFlux_x.bin(0).lower();
-  const float xEnd = integrFlux_x.bin(integrFlux_x.size()).upper();
-  const float inv_step = 1.f / integrFlux_x.bin(0).width();
 
   // the values in integrFlux are expected to be integrals of a non-negative
   // function
@@ -34,13 +32,13 @@ void calcIntegralsForIntersections(const std::vector<float> &xValues,
   const double yMin = 0.0;
   const double yMax = yData.back();
 
-  size_t nData = xValues.size();
   // all integrals below xStart must be 0
-  if (xValues[nData - 1] < xStart) {
+  if (xValues.back() < xStart) {
     std::fill(yValues.begin(), yValues.end(), yMin);
     return;
   }
 
+  const float xEnd = integrFlux_x.bin(integrFlux_x.size()).upper();
   // all integrals above xEnd must be equal to yMax
   if (xValues[0] > xEnd) {
     std::fill(yValues.begin(), yValues.end(), yMax);
@@ -54,7 +52,7 @@ void calcIntegralsForIntersections(const std::vector<float> &xValues,
 
   it = std::upper_bound(it, xValues.end(), xEnd);
   auto iMax = std::distance(xValues.begin(), it);
-
+  const float inv_step = 1.f / integrFlux_x.bin(0).width();
   for (; i < iMax; ++i) {
     float xi = xValues[i];
     auto j = integrFlux_x.index(xi);
