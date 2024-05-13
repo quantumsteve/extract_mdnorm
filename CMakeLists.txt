@@ -40,7 +40,10 @@ FetchContent_Declare(HighFive
   GIT_REPOSITORY ${HIGHFIVE_GIT_REPOSITORY}
   GIT_TAG ${HIGHFIVE_GIT_TAG}
 )
-FetchContent_MakeAvailable(HighFive)
+FetchContent_Declare(Range-v3
+    GIT_REPOSITORY "https://github.com/ericniebler/range-v3"
+    GIT_TAG "0.12.0" )
+FetchContent_MakeAvailable(HighFive Range-v3)
 
 # header containing all the filepaths as preprocessor defines
 set( source_name "src/validation_data_filepath.h.in" )
@@ -64,7 +67,8 @@ set( GARNET_ROT_NXS "${CMAKE_SOURCE_DIR}/data/garnet/CORELLI_extra_params.hdf5")
 configure_file( ${source_path} ${destination_path} )
 
 add_executable(calculateIntersections-test src/calculateIntersections.cpp src/calculateIntersections-test.cpp)
-target_link_libraries(calculateIntersections-test Eigen3::Eigen Catch2::Catch2WithMain)
+target_include_directories(calculateIntersections-test PUBLIC /home/svh/Documents/x86-simd-sort/lib)
+target_link_libraries(calculateIntersections-test Eigen3::Eigen range-v3 Catch2::Catch2WithMain)
 
 add_executable(wsIdx-test src/wsIdx-test.cpp)
 target_link_libraries(wsIdx-test Catch2::Catch2WithMain)
@@ -72,14 +76,16 @@ target_link_libraries(wsIdx-test Catch2::Catch2WithMain)
 add_executable(calcDiffractionIntersectionIntegral-test src/calculateIntersections.cpp
                                                         src/calcDiffractionIntersectionIntegral.cpp
                                                         src/calcDiffractionIntersectionIntegral-test.cpp )
+target_include_directories(calcDiffractionIntersectionIntegral-test PUBLIC /home/svh/Documents/x86-simd-sort/lib)
 
-target_link_libraries(calcDiffractionIntersectionIntegral-test HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
+target_link_libraries(calcDiffractionIntersectionIntegral-test HighFive Eigen3::Eigen range-v3 Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
 
 add_executable(garnet_reduction_corelli src/calculateIntersections.cpp
                                         src/calcDiffractionIntersectionIntegral.cpp
                                         src/garnet_reduction_corelli.cpp )
+target_include_directories(garnet_reduction_corelli PUBLIC /home/svh/Documents/x86-simd-sort/lib)
 
-target_link_libraries(garnet_reduction_corelli HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
+target_link_libraries(garnet_reduction_corelli /home/svh/Documents/x86-simd-sort/builddir/libx86simdsortcpp.so HighFive Eigen3::Eigen range-v3 Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
 
 include( CTest )
 

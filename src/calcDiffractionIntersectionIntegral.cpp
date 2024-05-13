@@ -18,7 +18,7 @@ void calcIntegralsForIntersections(const std::vector<float> &xValues,
                                    const std::vector<std::vector<float>> &integrFlux_x,
                                    const std::vector<std::vector<double>> &integrFlux_y, const size_t sp,
                                    std::vector<double> &yValues) {
-
+  yValues.resize(xValues.size());
   assert(xValues.size() == yValues.size());
 
   // the x-data from the workspace
@@ -95,7 +95,6 @@ void calcDiffractionIntersectionIntegral(std::vector<std::array<float, 4>> &inte
   auto intersectionsBegin = intersections.begin();
   // copy momenta to xValues
   xValues.resize(intersections.size());
-  yValues.resize(intersections.size());
   auto x = xValues.begin();
   for (auto it = intersectionsBegin; it != intersections.end(); ++it, ++x) {
     *x = (*it)[3];

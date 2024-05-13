@@ -14,6 +14,11 @@
  * @param wsIdx: workspace index
  */
 
+void calcIntegralsForIntersections(const std::vector<float> &xValues,
+                                   const std::vector<std::vector<float>> &integrFlux_x,
+                                   const std::vector<std::vector<double>> &integrFlux_y, const size_t sp,
+                                   std::vector<double> &yValues);
+
 void calcDiffractionIntersectionIntegral(std::vector<std::array<float, 4>> &intersections, std::vector<float> &xValues,
                                          std::vector<double> &yValues,
                                          const std::vector<std::vector<float>> &integrFlux_x,
