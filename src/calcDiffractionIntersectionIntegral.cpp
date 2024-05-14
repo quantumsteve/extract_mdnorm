@@ -51,7 +51,7 @@ void calcIntegralsForIntersections(const std::vector<float> &xValues,
   std::fill_n(yValues.begin(), i, yMin);
 
   it = std::upper_bound(it, xValues.end(), xEnd);
-  auto iMax = std::distance(xValues.begin(), it);
+  const auto iMax = std::distance(xValues.begin(), it);
   const float inv_step = 1.f / integrFlux_x.bin(0).width();
   for (; i < iMax; ++i) {
     float xi = xValues[i];
