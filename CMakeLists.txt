@@ -81,6 +81,12 @@ add_executable(garnet_reduction_corelli src/calculateIntersections.cpp
 
 target_link_libraries(garnet_reduction_corelli HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
 
+add_executable(benzil_corelli src/calculateIntersections.cpp
+                                        src/calcDiffractionIntersectionIntegral.cpp
+                                        src/garnet_reduction_corelli.cpp )
+
+target_link_libraries(benzil_corelli HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
+
 include( CTest )
 
 enable_testing()
