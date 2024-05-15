@@ -62,7 +62,8 @@ TEST_CASE("calculateIntersections") {
     std::unordered_map<int32_t, size_t> solidAngDetToIdx;
 
     std::vector<std::vector<double>> solidAngleWS;
-    HighFive::File sa_file("/home/svh/Documents/extract_mdnorm/data/benzil/SolidAngle20160720NoCC.nxs", HighFive::File::ReadOnly);
+    HighFive::File sa_file("/home/svh/Documents/extract_mdnorm/data/benzil/SolidAngle20160720NoCC.nxs",
+                           HighFive::File::ReadOnly);
     HighFive::Group sa_group = sa_file.getGroup("mantid_workspace_1");
     HighFive::Group sa_group2 = sa_group.getGroup("workspace");
     HighFive::DataSet sa_dataset = sa_group2.getDataSet("values");
@@ -89,7 +90,8 @@ TEST_CASE("calculateIntersections") {
       ++idx;
     }
 
-    HighFive::File file("/home/svh/Documents/extract_mdnorm/data/benzil/Spectrum20160720NoCC.nxs", HighFive::File::ReadOnly);
+    HighFive::File file("/home/svh/Documents/extract_mdnorm/data/benzil/Spectrum20160720NoCC.nxs",
+                        HighFive::File::ReadOnly);
     HighFive::Group group = file.getGroup("mantid_workspace_1");
     HighFive::Group group2 = group.getGroup("workspace");
     HighFive::DataSet dataset = group2.getDataSet("axis1");
@@ -132,12 +134,71 @@ TEST_CASE("calculateIntersections") {
     size_t ndets;
     dataset.read(ndets);
 
+    std::string rot_filename = "/home/svh/Documents/extract_mdnorm/data/benzil/CORELLI_0_extra_params.hdf5";
+    std::string event_filename = "/home/svh/Documents/extract_mdnorm/data/benzil/CORELLI_0_BEFORE_MDNorm.nxs";
+    HighFive::File rot_file(rot_filename, HighFive::File::ReadOnly);
+    HighFive::DataSet rot_dataset = rot_file.getDataSet("ubmatrix");
+    auto m_UB = rot_dataset.read<Eigen::Matrix3f>();
+
+    std::vector<bool> skip_dets;
+    rot_dataset = rot_file.getDataSet("skip_dets");
+    rot_dataset.read(skip_dets);
+
+    std::vector<float> lowValues, highValues;
+    HighFive::File event_file(event_filename, HighFive::File::ReadOnly);
+    HighFive::Group event_group = event_file.getGroup("MDEventWorkspace");
+    HighFive::Group event_group2 = event_group.getGroup("experiment0");
+    HighFive::Group event_group3 = event_group2.getGroup("logs");
+    HighFive::Group event_group4 = event_group3.getGroup("MDNorm_low");
+    dataset = event_group4.getDataSet("value");
+    dims = dataset.getDimensions();
+    REQUIRE(dims.size() == 1);
+    REQUIRE(dims[0] == 372736);
+    dataset.read(lowValues);
+    event_group4 = event_group3.getGroup("MDNorm_high");
+    dataset = event_group4.getDataSet("value");
+    dims = dataset.getDimensions();
+    REQUIRE(dims.size() == 1);
+    REQUIRE(dims[0] == 372736);
+    dataset.read(highValues);
+
+    std::vector<float> thetaValues, phiValues;
+    event_group3 = event_group2.getGroup("instrument");
+    event_group4 = event_group3.getGroup("physical_detectors");
+    dataset = event_group4.getDataSet("polar_angle");
+    dims = dataset.getDimensions();
+    REQUIRE(dims.size() == 1);
+    REQUIRE(dims[0] == 372736);
+    dataset.read(thetaValues);
+
+    for (auto &value : thetaValues)
+      value *= boost::math::float_constants::degree;
+
+    dataset = event_group4.getDataSet("azimuthal_angle");
+    dims = dataset.getDimensions();
+    REQUIRE(dims.size() == 1);
+    REQUIRE(dims[0] == 372736);
+    dataset.read(phiValues);
+
+    for (auto &value : phiValues)
+      value *= boost::math::float_constants::degree;
+
+    std::vector<int> detIDs;
+    dataset = event_group4.getDataSet("detector_number");
+    dims = dataset.getDimensions();
+    REQUIRE(dims.size() == 1);
+    REQUIRE(dims[0] == 372736);
+    dataset.read(detIDs);
+    std::vector<std::array<double, 8>> events;
+
     for (int file_num = 1; file_num < 36; ++file_num) {
-      std::string rot_filename = "/home/svh/Documents/extract_mdnorm/data/benzil/CORELLI_" + std::to_string(file_num) + "_extra_params.hdf5";
-      std::string event_filename = "/home/svh/Documents/extract_mdnorm/data/benzil/CORELLI_" + std::to_string(file_num) + "_BEFORE_MDNorm.nxs";
-      HighFive::File rot_file(rot_filename, HighFive::File::ReadOnly);
+      rot_filename =
+          "/home/svh/Documents/extract_mdnorm/data/benzil/CORELLI_" + std::to_string(file_num) + "_extra_params.hdf5";
+      event_filename =
+          "/home/svh/Documents/extract_mdnorm/data/benzil/CORELLI_" + std::to_string(file_num) + "_BEFORE_MDNorm.nxs";
+      rot_file = HighFive::File(rot_filename, HighFive::File::ReadOnly);
       HighFive::Group rot_group = rot_file.getGroup("expinfo_0");
-      HighFive::DataSet rot_dataset = rot_group.getDataSet("goniometer_0");
+      rot_dataset = rot_group.getDataSet("goniometer_0");
       auto rotMatrix = rot_dataset.read<Eigen::Matrix3f>();
 
       rot_group = rot_file.getGroup("symmetryOps");
@@ -148,31 +209,10 @@ TEST_CASE("calculateIntersections") {
         symm.push_back(rot_dataset.read<Eigen::Matrix3f>());
       }
 
-      rot_dataset = rot_file.getDataSet("ubmatrix");
-      auto m_UB = rot_dataset.read<Eigen::Matrix3f>();
-
-      std::vector<bool> skip_dets;
-      rot_dataset = rot_file.getDataSet("skip_dets");
-      rot_dataset.read(skip_dets);
-
-      std::vector<float> lowValues, highValues;
-      HighFive::File event_file(event_filename, HighFive::File::ReadOnly);
-      HighFive::Group event_group = event_file.getGroup("MDEventWorkspace");
-      HighFive::Group event_group2 = event_group.getGroup("experiment0");
-      HighFive::Group event_group3 = event_group2.getGroup("logs");
-      HighFive::Group event_group4 = event_group3.getGroup("MDNorm_low");
-      dataset = event_group4.getDataSet("value");
-      dims = dataset.getDimensions();
-      REQUIRE(dims.size() == 1);
-      REQUIRE(dims[0] == 372736);
-      dataset.read(lowValues);
-      event_group4 = event_group3.getGroup("MDNorm_high");
-      dataset = event_group4.getDataSet("value");
-      dims = dataset.getDimensions();
-      REQUIRE(dims.size() == 1);
-      REQUIRE(dims[0] == 372736);
-      dataset.read(highValues);
-
+      event_file = HighFive::File(event_filename, HighFive::File::ReadOnly);
+      event_group = event_file.getGroup("MDEventWorkspace");
+      event_group2 = event_group.getGroup("experiment0");
+      event_group3 = event_group2.getGroup("logs");
       event_group4 = event_group3.getGroup("gd_prtn_chrg");
       dataset = event_group4.getDataSet("value");
       dims = dataset.getDimensions();
@@ -181,39 +221,10 @@ TEST_CASE("calculateIntersections") {
       double protonCharge;
       dataset.read(protonCharge);
 
-      std::vector<float> thetaValues, phiValues;
-      event_group3 = event_group2.getGroup("instrument");
-      event_group4 = event_group3.getGroup("physical_detectors");
-      dataset = event_group4.getDataSet("polar_angle");
-      dims = dataset.getDimensions();
-      REQUIRE(dims.size() == 1);
-      REQUIRE(dims[0] == 372736);
-      dataset.read(thetaValues);
-
-      for (auto &value : thetaValues)
-        value *= boost::math::float_constants::degree;
-
-      dataset = event_group4.getDataSet("azimuthal_angle");
-      dims = dataset.getDimensions();
-      REQUIRE(dims.size() == 1);
-      REQUIRE(dims[0] == 372736);
-      dataset.read(phiValues);
-
-      for (auto &value : phiValues)
-        value *= boost::math::float_constants::degree;
-
-      std::vector<int> detIDs;
-      dataset = event_group4.getDataSet("detector_number");
-      dims = dataset.getDimensions();
-      REQUIRE(dims.size() == 1);
-      REQUIRE(dims[0] == 372736);
-      dataset.read(detIDs);
-
       // const char *EventHeaders[] = {"signal, errorSquared, center (each dim.)",
       //                              "signal, errorSquared, expInfoIndex, goniometerIndex, detectorId, center (each "
       //                              "dim.)"};
       // https://github.com/mantidproject/mantid/blob/c3ea43e4605f6898b84bd95c1196ccd8035364b1/Framework/DataObjects/src/BoxControllerNeXusIO.cpp#L27
-      std::vector<std::vector<double>> events;
       event_group2 = event_group.getGroup("event_data");
       dataset = event_group2.getDataSet("event_data");
       dataset.read(events);
@@ -249,8 +260,8 @@ TEST_CASE("calculateIntersections") {
           else // masked detector in flux, but not in input workspace
             continue;
 
-          //std::cout << "theta: " << thetaValues[i] << std::endl;
-          //std::cout << "phi: " << phiValues[i] << std::endl;
+          // std::cout << "theta: " << thetaValues[i] << std::endl;
+          // std::cout << "phi: " << phiValues[i] << std::endl;
 
           doctest.calculateIntersections(signal, intersections, thetaValues[i], phiValues[i], op, lowValues[i],
                                          highValues[i]);
@@ -271,14 +282,10 @@ TEST_CASE("calculateIntersections") {
       double duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stop - start).count();
       std::cout << " time: " << duration_total << "s\n";
 
-      /*HighFive::File norm_file("/home/svh/Documents/extract_mdnorm/data/benzil/CORELLI_0_norm.hdf5", HighFive::File::ReadOnly);
-      HighFive::Group norm_group = norm_file.getGroup("MDHistoWorkspace");
-      HighFive::Group norm_group2 = norm_group.getGroup("data");
-      HighFive::DataSet norm_dataset = norm_group2.getDataSet("signal");
-      dims = norm_dataset.getDimensions();
-      REQUIRE(dims.size() == 3);
-      REQUIRE(dims[0] == 1);
-      REQUIRE(dims[1] == 603);
+      /*HighFive::File norm_file("/home/svh/Documents/extract_mdnorm/data/benzil/CORELLI_0_norm.hdf5",
+      HighFive::File::ReadOnly); HighFive::Group norm_group = norm_file.getGroup("MDHistoWorkspace"); HighFive::Group
+      norm_group2 = norm_group.getGroup("data"); HighFive::DataSet norm_dataset = norm_group2.getDataSet("signal"); dims
+      = norm_dataset.getDimensions(); REQUIRE(dims.size() == 3); REQUIRE(dims[0] == 1); REQUIRE(dims[1] == 603);
       REQUIRE(dims[2] == 603);
       std::vector<std::vector<std::vector<double>>> data;
       norm_dataset.read(data);
@@ -286,7 +293,7 @@ TEST_CASE("calculateIntersections") {
       auto &data2d = data[0];
       double max_signal = *std::max_element(signal.begin(), signal.end());
 
-      double ref_max{0.};  
+      double ref_max{0.};
       for (size_t i = 0; i < dims[1]; ++i) {
         for (size_t j = 0; j < dims[2]; ++j) {
           //REQUIRE_THAT(data2d[i][j], Catch::Matchers::WithinAbs(signal.at(j, i, 0), 5.e+05));
@@ -301,21 +308,17 @@ TEST_CASE("calculateIntersections") {
         for (auto &val : events) {
           Eigen::Vector3f v(val[5], val[6], val[7]);
           v = op * v;
-          h(v[0], v[1], v[2]);//, weight(val[0]));
+          h(v[0], v[1], v[2]); //, weight(val[0]));
         }
       }
       stop = std::chrono::high_resolution_clock::now();
       duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stop - start).count();
       std::cout << " time: " << duration_total << "s\n";
 
-      /*HighFive::File data_file("/home/svh/Documents/extract_mdnorm/data/benzil/CORELLI_0_data.hdf5", HighFive::File::ReadOnly);
-      HighFive::Group data_group = data_file.getGroup("MDHistoWorkspace");
-      HighFive::Group data_group2 = data_group.getGroup("data");
-      HighFive::DataSet data_dataset = data_group2.getDataSet("signal");
-      dims = data_dataset.getDimensions();
-      REQUIRE(dims.size() == 3);
-      REQUIRE(dims[0] == 1);
-      REQUIRE(dims[1] == 603);
+      /*HighFive::File data_file("/home/svh/Documents/extract_mdnorm/data/benzil/CORELLI_0_data.hdf5",
+      HighFive::File::ReadOnly); HighFive::Group data_group = data_file.getGroup("MDHistoWorkspace"); HighFive::Group
+      data_group2 = data_group.getGroup("data"); HighFive::DataSet data_dataset = data_group2.getDataSet("signal"); dims
+      = data_dataset.getDimensions(); REQUIRE(dims.size() == 3); REQUIRE(dims[0] == 1); REQUIRE(dims[1] == 603);
       REQUIRE(dims[2] == 603);
       norm_dataset.read(data);
 
@@ -331,9 +334,6 @@ TEST_CASE("calculateIntersections") {
       }
       //REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));
       std::cout << max_signal << " " <<  ref_max << std::endl;*/
-
-
-
     }
     std::vector<double> out;
     for (auto &&x : indexed(h))
@@ -345,6 +345,6 @@ TEST_CASE("calculateIntersections") {
 
     std::ofstream out_strm("meow.txt");
     for (size_t i = 0; i < out.size(); ++i)
-      out_strm << out[i]/meow[i] << '\n';
+      out_strm << out[i] / meow[i] << '\n';
   }
 }

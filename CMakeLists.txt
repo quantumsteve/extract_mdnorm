@@ -83,7 +83,7 @@ target_link_libraries(garnet_reduction_corelli HighFive Eigen3::Eigen Catch2::Ca
 
 add_executable(benzil_corelli src/calculateIntersections.cpp
                                         src/calcDiffractionIntersectionIntegral.cpp
-                                        src/garnet_reduction_corelli.cpp )
+                                        src/benzil_corelli.cpp )
 
 target_link_libraries(benzil_corelli HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
 
