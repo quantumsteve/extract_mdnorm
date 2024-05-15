@@ -137,10 +137,12 @@ public:
         // kStart, kEnd and lStart, lEnd and momi will be between kfmin and
         // kfmax
         float ki = fk * (hi - hStart) + kStart;
-        float li = fl * (hi - hStart) + lStart;
-        if ((ki >= m_kX[0]) && (ki <= m_kX[kNBins - 1]) && (li >= m_lX[0]) && (li <= m_lX[lNBins - 1])) {
-          float momi = fmom * (hi - hStart) + kfmin;
-          intersections.push_back({{hi, ki, li, momi}});
+        if ((ki >= m_kX[0]) && (ki <= m_kX[kNBins - 1])) {
+          float li = fl * (hi - hStart) + lStart;
+          if ((li >= m_lX[0]) && (li <= m_lX[lNBins - 1])) {
+            float momi = fmom * (hi - hStart) + kfmin;
+            intersections.push_back({{hi, ki, li, momi}});
+          }
         }
       }
     }
@@ -156,10 +158,12 @@ public:
         // hStart, hEnd and lStart, lEnd and momi will be between kfmin and
         // kfmax
         float hi = fh * (ki - kStart) + hStart;
-        float li = fl * (ki - kStart) + lStart;
-        if ((hi >= m_hX[0]) && (hi <= m_hX[hNBins - 1]) && (li >= m_lX[0]) && (li <= m_lX[lNBins - 1])) {
-          float momi = fmom * (ki - kStart) + kfmin;
-          intersections.push_back({{hi, ki, li, momi}});
+        if ((hi >= m_hX[0]) && (hi <= m_hX[hNBins - 1])) {
+          float li = fl * (ki - kStart) + lStart;
+          if ((li >= m_lX[0]) && (li <= m_lX[lNBins - 1])) {
+            float momi = fmom * (ki - kStart) + kfmin;
+            intersections.push_back({{hi, ki, li, momi}});
+          }
         }
       }
     }
@@ -173,10 +177,12 @@ public:
       for (auto i = lStartIdx; i < lEndIdx; ++i) {
         float li = m_lX[i];
         float hi = fh * (li - lStart) + hStart;
-        float ki = fk * (li - lStart) + kStart;
-        if ((hi >= m_hX[0]) && (hi <= m_hX[hNBins - 1]) && (ki >= m_kX[0]) && (ki <= m_kX[kNBins - 1])) {
-          float momi = fmom * (li - lStart) + kfmin;
-          intersections.push_back({{hi, ki, li, momi}});
+        if ((hi >= m_hX[0]) && (hi <= m_hX[hNBins - 1])) {
+          float ki = fk * (li - lStart) + kStart;
+          if ((ki >= m_kX[0]) && (ki <= m_kX[kNBins - 1])) {
+            float momi = fmom * (li - lStart) + kfmin;
+            intersections.push_back({{hi, ki, li, momi}});
+          }
         }
       }
     }
