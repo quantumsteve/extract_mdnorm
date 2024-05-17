@@ -87,6 +87,12 @@ add_executable(benzil_corelli src/calculateIntersections.cpp
 
 target_link_libraries(benzil_corelli HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
 
+add_executable(bixbyite_topaz src/calculateIntersections.cpp
+                                        src/calcDiffractionIntersectionIntegral.cpp
+                                        src/bixbyite_topaz.cpp )
+
+target_link_libraries(bixbyite_topaz HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
+
 include( CTest )
 
 enable_testing()

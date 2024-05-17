@@ -32,6 +32,8 @@ public:
    */
   void calculateIntersections(std::vector<std::array<double, 4>> &intersections, double theta, double phi,
                               const Eigen::Matrix3d &transform, double lowvalue, double highvalue);
+  void calculateIntersections(std::vector<std::array<float, 4>> &intersections, float theta, float phi,
+                              const Eigen::Matrix3f &transform, float lowvalue, float highvalue);
   /**
    * Calculate the points of intersection for the given detector with cuboid
    * surrounding the detector position in HKL
