@@ -191,7 +191,7 @@ TEST_CASE("calculateIntersections") {
     dataset.read(detIDs);
     std::vector<std::array<double, 8>> events;
 
-    for (int file_num = 1; file_num < 36; ++file_num) {
+    for (int file_num = 0; file_num < 36; ++file_num) {
       rot_filename =
           "/home/svh/Documents/extract_mdnorm/data/benzil/CORELLI_" + std::to_string(file_num) + "_extra_params.hdf5";
       event_filename =
