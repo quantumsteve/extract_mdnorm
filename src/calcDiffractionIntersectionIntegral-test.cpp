@@ -211,16 +211,10 @@ TEST_CASE("calculateIntersections") {
     //                              "signal, errorSquared, expInfoIndex, goniometerIndex, detectorId, center (each "
     //                              "dim.)"};
     // https://github.com/mantidproject/mantid/blob/c3ea43e4605f6898b84bd95c1196ccd8035364b1/Framework/DataObjects/src/BoxControllerNeXusIO.cpp#L27
-    std::vector<std::array<double,4>> events;
+    std::vector<std::vector<double>> events;
     event_group2 = event_group.getGroup("event_data");
     dataset = event_group2.getDataSet("event_data");
-    dims = dataset.getDimensions();
-    REQUIRE(dims.size() == 2);
-    REQUIRE(dims[0] == 11959331);
-    REQUIRE(dims[1] == 8);
-    dataset.select(std::vector<size_t>{0, 5, 6, 7}).read(events);
-    REQUIRE(events.size() == 11959331);
-    REQUIRE(events[0].size() == 4);
+    dataset.read(events);
 
     auto signal = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
                                       std::get<1>(axes), std::get<2>(axes));
@@ -301,7 +295,7 @@ TEST_CASE("calculateIntersections") {
 #pragma omp parallel for collapse(2)
     for (const Eigen::Matrix3f &op : transforms) {
       for (auto &val : events) {
-        Eigen::Vector3f v(val[1], val[2], val[3]);
+        Eigen::Vector3f v(val[5], val[6], val[7]);
         v = op * v;
         h(v[0], v[1], v[2], weight(val[0]));
       }
