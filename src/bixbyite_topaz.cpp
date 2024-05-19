@@ -21,8 +21,7 @@ TEST_CASE("calculateIntersections") {
 
     using namespace boost::histogram;
     using reg = axis::regular<float>;
-    std::tuple<reg, reg, reg> axes{reg(401, -16.0, 16.0, "x"), reg(401, -16.0, 16.0, "y"),
-                                   reg(401, -16.0, 16.0, "z")};
+    std::tuple<reg, reg, reg> axes{reg(601, -16.0, 16.0, "x"), reg(601, -16.0, 16.0, "y"), reg(601, -16.0, 16.0, "z")};
 
     std::vector<float> hX, kX, lX;
     {
@@ -81,11 +80,18 @@ TEST_CASE("calculateIntersections") {
     std::vector<int> dc_data;
     sa_dataset.read(dc_data);
 
+    std::vector<int> detIDs;
+    sa_dataset = sa_group3.getDataSet("detector_list");
+    dims = sa_dataset.getDimensions();
+    REQUIRE(dims.size() == 1);
+    REQUIRE(dims[0] == 1638400);
+    sa_dataset.read(detIDs);
+
     int detector{0};
     size_t idx{0};
     for (auto &value : dc_data) {
       for (int i = 0; i < value; ++i) {
-        solidAngDetToIdx.emplace(detector++, idx);
+        solidAngDetToIdx.emplace(detIDs[detector++], idx);
       }
       ++idx;
     }
@@ -117,11 +123,17 @@ TEST_CASE("calculateIntersections") {
     REQUIRE(dims[0] == 25);
     dataset.read(dc_data);
 
+    dataset = group3.getDataSet("detector_list");
+    dims = dataset.getDimensions();
+    REQUIRE(dims.size() == 1);
+    REQUIRE(dims[0] == 1638400);
+    dataset.read(detIDs);
+
     detector = 0;
     idx = 0;
     for (auto &value : dc_data) {
       for (int i = 0; i < value; ++i) {
-        fluxDetToIdx.emplace(detector++, idx);
+        fluxDetToIdx.emplace(detIDs[detector++], idx);
       }
       ++idx;
     }
@@ -133,8 +145,6 @@ TEST_CASE("calculateIntersections") {
     REQUIRE(dims[0] == 1);
     size_t ndets;
     dataset.read(ndets);
-    std::cout << "ndets: " << ndets << std::endl;
-
 
     std::string rot_filename = "/home/svh/Documents/extract_mdnorm/data/bixbyite/TOPAZ_40704_extra_params.hdf5";
     std::string event_filename = "/home/svh/Documents/extract_mdnorm/data/bixbyite/TOPAZ_40704_BEFORE_MDNorm.nxs";
@@ -185,7 +195,6 @@ TEST_CASE("calculateIntersections") {
     for (auto &value : phiValues)
       value *= boost::math::float_constants::degree;
 
-    std::vector<int> detIDs;
     dataset = event_group4.getDataSet("detector_number");
     dims = dataset.getDimensions();
     REQUIRE(dims.size() == 1);
@@ -253,14 +262,13 @@ TEST_CASE("calculateIntersections") {
           if (skip_dets[i])
             continue;
 
-          int32_t detID = i; //detIDs[i];
+          int32_t detID = detIDs[i];
           // get the flux spectrum number: this is for diffraction only!
           size_t wsIdx = 0;
           if (auto index = fluxDetToIdx.find(detID); index != fluxDetToIdx.end())
             wsIdx = index->second;
           else // masked detector in flux, but not in input workspace
           {
-            //std::cout << "skipped? " << detID << std::endl;
             continue;
           }
 
