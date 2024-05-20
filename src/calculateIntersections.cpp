@@ -9,7 +9,7 @@ static bool compareMomentum(const std::array<float, 4> &v1, const std::array<flo
 }
 
 MDNorm::MDNorm(const std::vector<float> &hX, const std::vector<float> &kX, const std::vector<float> &lX)
-    : m_hX(hX), m_kX(kX), m_lX(lX) {}
+    : m_hX(hX), m_kX(kX), m_lX(lX), m_transformation(Eigen::Matrix3f::Identity()) {}
 
 /**
  * Calculate the points of intersection for the given detector with cuboid
@@ -328,10 +328,10 @@ void MDNorm::calculateIntersections(histogram_type &h, std::vector<std::array<fl
         continue; // Assume zero contribution if difference is small
 
       // Average between two intersections for final position
-      // [Task 89] Sample and background have same 'pos[]'
-      Eigen::Vector3f pos;
-      std::transform(curIntSec.data(), curIntSec.data() + 3, prevIntSec.data(), pos.data(),
-                     [](const float rhs, const float lhs) { return 0.5f * (rhs + lhs); });
+      // Find the coordiate of the new position after transformation
+      Eigen::Map<const Eigen::Vector3f> pos1(curIntSec.data());
+      Eigen::Map<const Eigen::Vector3f> pos2(prevIntSec.data());
+      Eigen::Vector3f posNew = m_transformation * 0.5 * (pos1 + pos2);
 
       // Diffraction
       // index of the current intersection
@@ -339,14 +339,8 @@ void MDNorm::calculateIntersections(histogram_type &h, std::vector<std::array<fl
       // signal = integral between two consecutive intersections
       double signal = (yValues[k] - yValues[k - 1]) * solid;
 
-      // Find the coordiate of the new position after transformation
-      Eigen::Vector3f posNew = pos;
-      // m_transformation.multiplyPoint(pos, posNew); (identify matrix)
-      // std::copy(std::begin(pos), std::end(pos), std::begin(posNew));
-
-      using namespace boost::histogram;
+      using boost::histogram::weight;
       // Set to output
-      // set the calculated signal to
       h(posNew[0], posNew[1], posNew[2], weight(signal));
     }
     return;

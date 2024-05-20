@@ -51,6 +51,10 @@ public:
    */
   void calcSingleDetectorNorm(const std::vector<std::array<float, 4>> &intersections, const double &solid,
                               std::vector<double> &yValues, histogram_type &h);
+
+  void setTransformation(Eigen::Matrix3f &t) { m_transformation = t; }
+
 private:
-  std::vector<float> m_hX, m_kX, m_lX /*, m_eX*/;
+  std::vector<float> m_hX, m_kX, m_lX;
+  Eigen::Matrix3f m_transformation;
 };
