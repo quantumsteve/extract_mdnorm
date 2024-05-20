@@ -48,14 +48,15 @@ set( source_path "${CMAKE_SOURCE_DIR}/${source_name}" )
 set( destination_name "src/validation_data_filepath.h" )
 set( destination_path "${CMAKE_SOURCE_DIR}/${destination_name}" )
 
-set( FLUX_NXS "${CMAKE_SOURCE_DIR}/data/SingleCrystalDiffuseReduction_Flux.nxs" )
 set( SA_NXS "${CMAKE_SOURCE_DIR}/data/SingleCrystalDiffuseReduction_SA.nxs" )
+set( FLUX_NXS "${CMAKE_SOURCE_DIR}/data/SingleCrystalDiffuseReduction_Flux.nxs" )
 set( EVENT_NXS "${CMAKE_SOURCE_DIR}/data/CORELLI_29782_Before_MDNorm.nxs" )
-set( NORM_NXS "${CMAKE_SOURCE_DIR}/data/CORELLI_29782_After_MDNorm_symm.nxs" )
 set( ROT_NXS "${CMAKE_SOURCE_DIR}/data/CORELLI_29782_rotations.hdf5")
-set( GARNET_EVENT_NXS "${CMAKE_SOURCE_DIR}/data/garnet/CORELLI_BEFORE_MDNorm.nxs")
+set( NORM_NXS "${CMAKE_SOURCE_DIR}/data/CORELLI_29782_After_MDNorm_symm.nxs" )
+
 set( GARNET_SA_NXS "${CMAKE_SOURCE_DIR}/data/garnet/solid_angle_2p5-8.nxs")
 set( GARNET_FLUX_NXS "${CMAKE_SOURCE_DIR}/data/garnet/flux_2p5-8.nxs")
+set( GARNET_EVENT_NXS "${CMAKE_SOURCE_DIR}/data/garnet/CORELLI_BEFORE_MDNorm.nxs")
 set( GARNET_ROT_NXS "${CMAKE_SOURCE_DIR}/data/garnet/CORELLI_extra_params.hdf5")
 
 set( BENZIL_SA_NXS "${CMAKE_SOURCE_DIR}/data/benzil/SolidAngle20160720NoCC.nxs" )
@@ -63,12 +64,12 @@ set( BENZIL_FLUX_NXS "${CMAKE_SOURCE_DIR}/data/benzil/Spectrum20160720NoCC.nxs" 
 set( BENZIL_EVENT_NXS_PREFIX "${CMAKE_SOURCE_DIR}/data/benzil/CORELLI_" )
 set( BENZIL_EVENT_NXS_MIN "00" )
 set( BENZIL_EVENT_NXS_MAX "35" )
+
 set( BIXBYITE_SA_NXS "${CMAKE_SOURCE_DIR}/data/bixbyite/solidAngle.nxs" )
 set( BIXBYITE_FLUX_NXS "${CMAKE_SOURCE_DIR}/data/bixbyite/spectra.nxs" )
 set( BIXBYITE_EVENT_NXS_PREFIX "${CMAKE_SOURCE_DIR}/data/bixbyite/TOPAZ_" )
 set( BIXBYITE_EVENT_NXS_MIN "40704" )
 set( BIXBYITE_EVENT_NXS_MAX "40725" )
-
 
 configure_file( ${source_path} ${destination_path} )
 
