@@ -8,9 +8,6 @@
 #include <highfive/eigen.hpp>
 #include <highfive/highfive.hpp>
 
-#include <atomic>
-#include <fstream>
-#include <iomanip>
 #include <iostream>
 #include <tuple>
 #include <vector>
@@ -71,51 +68,19 @@ TEST_CASE("calculateIntersections") {
     m_W << 1.f, 1.f, 0.f, 1.f, -1.f, 0.f, 0.f, 0.f, 1.f;
 
     std::unordered_map<int32_t, size_t> fluxDetToIdx;
-    std::unordered_map<int32_t, size_t> solidAngDetToIdx;
-
-    std::vector<std::vector<double>> solidAngleWS;
-    HighFive::File sa_file(SA_NXS, HighFive::File::ReadOnly);
-    HighFive::Group sa_group = sa_file.getGroup("mantid_workspace_1");
-    HighFive::Group sa_group2 = sa_group.getGroup("workspace");
-    HighFive::DataSet sa_dataset = sa_group2.getDataSet("values");
-    std::vector<size_t> dims = sa_dataset.getDimensions();
-    REQUIRE(dims.size() == 2);
-    REQUIRE(dims[1] == 1);
-    std::vector<double> read_data;
-    sa_dataset.read(read_data);
-
-    for (const double value : read_data)
-      solidAngleWS.push_back({value});
-
-    sa_group2 = sa_group.getGroup("instrument");
-    HighFive::Group sa_group3 = sa_group2.getGroup("detector");
-    sa_dataset = sa_group3.getDataSet("detector_count");
-    dims = sa_dataset.getDimensions();
-    REQUIRE(dims.size() == 1);
-    REQUIRE(dims[0] == 372736);
-    std::vector<int> dc_data;
-    sa_dataset.read(dc_data);
-
-    int detector{0};
-    size_t idx{0};
-    for (auto &value : dc_data) {
-      for (int i = 0; i < value; ++i) {
-        solidAngDetToIdx.emplace(detector++, idx);
-      }
-      ++idx;
-    }
 
     HighFive::File file(FLUX_NXS, HighFive::File::ReadOnly);
     HighFive::Group group = file.getGroup("mantid_workspace_1");
     HighFive::Group group2 = group.getGroup("workspace");
     HighFive::DataSet dataset = group2.getDataSet("axis1");
-    dims = dataset.getDimensions();
+    auto dims = dataset.getDimensions();
     std::vector<float> read_data_f;
     dataset.read(read_data_f);
     REQUIRE(dims.size() == 1);
     const reg integrFlux_x(read_data_f.size() - 1, read_data_f.front(), read_data_f.back(), "integrFlux_x");
     REQUIRE_THAT(integrFlux_x.bin(0).width(), Catch::Matchers::WithinAbs(read_data_f[1] - read_data_f[0], 1e-4));
 
+    std::vector<double> read_data;
     dataset = group2.getDataSet("values");
     dims = dataset.getDimensions();
     dataset.read(read_data);
@@ -126,6 +91,7 @@ TEST_CASE("calculateIntersections") {
     for (size_t j = 0; j < dims[1]; ++j)
       integrFlux_y[0].push_back(read_data[j]);
 
+    std::vector<int> dc_data;
     group2 = group.getGroup("instrument");
     HighFive::Group group3 = group2.getGroup("detector");
     dataset = group3.getDataSet("detector_count");
@@ -134,11 +100,18 @@ TEST_CASE("calculateIntersections") {
     REQUIRE(dims[0] == 1);
     dataset.read(dc_data);
 
-    detector = 0;
-    idx = 0;
+    std::vector<int> detIDs;
+    dataset = group3.getDataSet("detector_list");
+    dims = dataset.getDimensions();
+    REQUIRE(dims.size() == 1);
+    REQUIRE(dims[0] == 372736);
+    dataset.read(detIDs);
+
+    int detector = 0;
+    int idx = 0;
     for (auto &value : dc_data) {
       for (int i = 0; i < value; ++i) {
-        fluxDetToIdx.emplace(detector++, idx);
+        fluxDetToIdx.emplace(detIDs[detector++], idx);
       }
       ++idx;
     }
@@ -199,7 +172,6 @@ TEST_CASE("calculateIntersections") {
     for (auto &value : phiValues)
       value *= boost::math::float_constants::degree;
 
-    std::vector<int> detIDs;
     dataset = event_group4.getDataSet("detector_number");
     dims = dataset.getDimensions();
     REQUIRE(dims.size() == 1);

@@ -97,11 +97,18 @@ TEST_CASE("calculateIntersections") {
     std::vector<int> dc_data;
     sa_dataset.read(dc_data);
 
+    std::vector<int> detIDs;
+    sa_dataset = sa_group3.getDataSet("detector_list");
+    dims = sa_dataset.getDimensions();
+    REQUIRE(dims.size() == 1);
+    REQUIRE(dims[0] == 372736);
+    sa_dataset.read(detIDs);
+
     int detector{0};
     size_t idx{0};
     for (auto &value : dc_data) {
       for (int i = 0; i < value; ++i) {
-        solidAngDetToIdx.emplace(detector++, idx);
+        solidAngDetToIdx.emplace(detIDs[detector++], idx);
       }
       ++idx;
     }
@@ -135,11 +142,17 @@ TEST_CASE("calculateIntersections") {
     REQUIRE(dims[0] == 1);
     dataset.read(dc_data);
 
+    dataset = group3.getDataSet("detector_list");
+    dims = dataset.getDimensions();
+    REQUIRE(dims.size() == 1);
+    REQUIRE(dims[0] == 372736);
+    dataset.read(detIDs);
+
     detector = 0;
     idx = 0;
     for (auto &value : dc_data) {
       for (int i = 0; i < value; ++i) {
-        fluxDetToIdx.emplace(detector++, idx);
+        fluxDetToIdx.emplace(detIDs[detector++], idx);
       }
       ++idx;
     }
@@ -200,7 +213,6 @@ TEST_CASE("calculateIntersections") {
     for (auto &value : phiValues)
       value *= boost::math::float_constants::degree;
 
-    std::vector<int> detIDs;
     dataset = event_group4.getDataSet("detector_number");
     dims = dataset.getDimensions();
     REQUIRE(dims.size() == 1);
