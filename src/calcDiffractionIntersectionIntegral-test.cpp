@@ -201,6 +201,7 @@ TEST_CASE("calculateIntersections") {
     REQUIRE(dims[0] == 372736);
     dataset.read(thetaValues);
 
+#pragma omp parallel for
     for (auto &value : thetaValues)
       value *= boost::math::float_constants::degree;
 
@@ -210,6 +211,7 @@ TEST_CASE("calculateIntersections") {
     REQUIRE(dims[0] == 372736);
     dataset.read(phiValues);
 
+#pragma omp parallel for
     for (auto &value : phiValues)
       value *= boost::math::float_constants::degree;
 
