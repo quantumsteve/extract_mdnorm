@@ -237,6 +237,12 @@ TEST_CASE("calculateIntersections") {
       transforms.push_back(transform.inverse());
     }
 
+    std::vector<Eigen::Matrix3f> transforms2;
+    for (const Eigen::Matrix3f &op : symm) {
+      Eigen::Matrix3f transform = m_UB * op * m_W;
+      transforms2.push_back(transform.inverse());
+    }
+
     std::vector<std::array<float, 4>> intersections;
     std::vector<float> xValues;
     std::vector<double> yValues;
@@ -305,7 +311,7 @@ TEST_CASE("calculateIntersections") {
     start = std::chrono::high_resolution_clock::now();
 
 #pragma omp parallel for collapse(2)
-    for (const Eigen::Matrix3f &op : transforms) {
+    for (const Eigen::Matrix3f &op : transforms2) {
       for (auto &val : events) {
         Eigen::Vector3f v(val[5], val[6], val[7]);
         v = op * v;
