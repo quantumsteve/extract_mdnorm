@@ -2,7 +2,7 @@
 #include "calculateIntersections.h"
 
 #include "catch2/catch_all.hpp"
-//#include "validation_data_filepath.h"
+#include "validation_data_filepath.h"
 
 #include <boost/histogram.hpp>
 #include <boost/math/constants/constants.hpp>
@@ -61,8 +61,7 @@ TEST_CASE("calculateIntersections") {
     std::unordered_map<int32_t, size_t> solidAngDetToIdx;
 
     std::vector<std::vector<double>> solidAngleWS;
-    HighFive::File sa_file("/home/svh/Documents/extract_mdnorm/data/bixbyite/solidAngle.nxs",
-                           HighFive::File::ReadOnly);
+    HighFive::File sa_file(BIXBYITE_SA_NXS, HighFive::File::ReadOnly);
     HighFive::Group sa_group = sa_file.getGroup("mantid_workspace_1");
     HighFive::Group sa_group2 = sa_group.getGroup("workspace");
     HighFive::DataSet sa_dataset = sa_group2.getDataSet("values");
@@ -96,8 +95,7 @@ TEST_CASE("calculateIntersections") {
       ++idx;
     }
 
-    HighFive::File file("/home/svh/Documents/extract_mdnorm/data/bixbyite/spectra.nxs",
-                        HighFive::File::ReadOnly);
+    HighFive::File file(BIXBYITE_FLUX_NXS, HighFive::File::ReadOnly);
     HighFive::Group group = file.getGroup("mantid_workspace_1");
     HighFive::Group group2 = group.getGroup("workspace");
     HighFive::DataSet dataset = group2.getDataSet("axis1");
@@ -146,8 +144,8 @@ TEST_CASE("calculateIntersections") {
     size_t ndets;
     dataset.read(ndets);
 
-    std::string rot_filename = "/home/svh/Documents/extract_mdnorm/data/bixbyite/TOPAZ_40704_extra_params.hdf5";
-    std::string event_filename = "/home/svh/Documents/extract_mdnorm/data/bixbyite/TOPAZ_40704_BEFORE_MDNorm.nxs";
+    std::string rot_filename = std::string(BIXBYITE_EVENT_NXS_PREFIX).append("40704_extra_params.hdf5");
+    std::string event_filename = std::string(BIXBYITE_EVENT_NXS_PREFIX).append("40704_BEFORE_MDNorm.nxs");
     HighFive::File rot_file(rot_filename, HighFive::File::ReadOnly);
     HighFive::DataSet rot_dataset = rot_file.getDataSet("ubmatrix");
     auto m_UB = rot_dataset.read<Eigen::Matrix3f>();
@@ -202,11 +200,9 @@ TEST_CASE("calculateIntersections") {
     dataset.read(detIDs);
     std::vector<std::array<double, 8>> events;
 
-    for (int file_num = 40704; file_num < 40726; ++file_num) {
-      rot_filename =
-          "/home/svh/Documents/extract_mdnorm/data/bixbyite/TOPAZ_" + std::to_string(file_num) + "_extra_params.hdf5";
-      event_filename =
-          "/home/svh/Documents/extract_mdnorm/data/bixbyite/TOPAZ_" + std::to_string(file_num) + "_BEFORE_MDNorm.nxs";
+    for (int file_num = BIXBYITE_EVENT_NXS_MIN; file_num <= BIXBYITE_EVENT_NXS_MAX; ++file_num) {
+      rot_filename = BIXBYITE_EVENT_NXS_PREFIX + std::to_string(file_num) + "_extra_params.hdf5";
+      event_filename = BIXBYITE_EVENT_NXS_PREFIX + std::to_string(file_num) + "_BEFORE_MDNorm.nxs";
       rot_file = HighFive::File(rot_filename, HighFive::File::ReadOnly);
       HighFive::Group rot_group = rot_file.getGroup("expinfo_0");
       rot_dataset = rot_group.getDataSet("goniometer_0");
@@ -294,7 +290,7 @@ TEST_CASE("calculateIntersections") {
       double duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stop - start).count();
       std::cout << " time: " << duration_total << "s\n";
 
-      /*HighFive::File norm_file("/home/svh/Documents/extract_mdnorm/data/benzil/CORELLI_0_norm.hdf5",
+      /*HighFive::File norm_file(BIXBYITE_EVENT_NXS_PREFIX+"_0_norm.hdf5",
       HighFive::File::ReadOnly); HighFive::Group norm_group = norm_file.getGroup("MDHistoWorkspace"); HighFive::Group
       norm_group2 = norm_group.getGroup("data"); HighFive::DataSet norm_dataset = norm_group2.getDataSet("signal"); dims
       = norm_dataset.getDimensions(); REQUIRE(dims.size() == 3); REQUIRE(dims[0] == 1); REQUIRE(dims[1] == 603);
@@ -327,7 +323,7 @@ TEST_CASE("calculateIntersections") {
       duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stop - start).count();
       std::cout << " time: " << duration_total << "s\n";
 
-      /*HighFive::File data_file("/home/svh/Documents/extract_mdnorm/data/benzil/CORELLI_0_data.hdf5",
+      /*HighFive::File data_file(BIXBYITE_EVENT_NXS_PREFIX+"0_data.hdf5",
       HighFive::File::ReadOnly); HighFive::Group data_group = data_file.getGroup("MDHistoWorkspace"); HighFive::Group
       data_group2 = data_group.getGroup("data"); HighFive::DataSet data_dataset = data_group2.getDataSet("signal"); dims
       = data_dataset.getDimensions(); REQUIRE(dims.size() == 3); REQUIRE(dims[0] == 1); REQUIRE(dims[1] == 603);

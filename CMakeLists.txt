@@ -66,20 +66,17 @@ set( BENZIL_FLUX_NXS "${CMAKE_SOURCE_DIR}/data/benzil/Spectrum20160720NoCC.nxs" 
 set( BENZIL_EVENT_NXS_PREFIX "${CMAKE_SOURCE_DIR}/data/benzil/CORELLI_" )
 set( BENZIL_EVENT_NXS_MIN "00" )
 set( BENZIL_EVENT_NXS_MAX "35" )
-set( BIXBYTE_SA_NXS "${CMAKE_SOURCE_DIR}/data/bixbyte/solidAngle.nxs" )
-set( BIXBYTE_FLUX_NXS "${CMAKE_SOURCE_DIR}/data/bixbyte/spectra.nxs" )
-set( BIXBYTE_EVENT_NXS_PREFIX "${CMAKE_SOURCE_DIR}/data/bixbyte/TOPAZ_" )
-set( BIXBYTE_EVENT_NXS_MIN "40704" )
-set( BIXBYTE_EVENT_NXS_MAX "40725" )
+set( BIXBYITE_SA_NXS "${CMAKE_SOURCE_DIR}/data/bixbyite/solidAngle.nxs" )
+set( BIXBYITE_FLUX_NXS "${CMAKE_SOURCE_DIR}/data/bixbyite/spectra.nxs" )
+set( BIXBYITE_EVENT_NXS_PREFIX "${CMAKE_SOURCE_DIR}/data/bixbyite/TOPAZ_" )
+set( BIXBYITE_EVENT_NXS_MIN "40704" )
+set( BIXBYITE_EVENT_NXS_MAX "40725" )
 
 
 configure_file( ${source_path} ${destination_path} )
 
 add_executable(calculateIntersections-test src/calculateIntersections.cpp src/calculateIntersections-test.cpp)
 target_link_libraries(calculateIntersections-test Eigen3::Eigen Catch2::Catch2WithMain)
-
-add_executable(wsIdx-test src/wsIdx-test.cpp)
-target_link_libraries(wsIdx-test Catch2::Catch2WithMain)
 
 add_executable(calcDiffractionIntersectionIntegral-test src/calculateIntersections.cpp
                                                         src/calcDiffractionIntersectionIntegral.cpp
