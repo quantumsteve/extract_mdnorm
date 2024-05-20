@@ -61,6 +61,18 @@ set( GARNET_SA_NXS "${CMAKE_SOURCE_DIR}/data/garnet/solid_angle_2p5-8.nxs")
 set( GARNET_FLUX_NXS "${CMAKE_SOURCE_DIR}/data/garnet/flux_2p5-8.nxs")
 set( GARNET_ROT_NXS "${CMAKE_SOURCE_DIR}/data/garnet/CORELLI_extra_params.hdf5")
 
+set( BENZIL_SA_NXS "${CMAKE_SOURCE_DIR}/data/benzil/SolidAngle20160720NoCC.nxs" )
+set( BENZIL_FLUX_NXS "${CMAKE_SOURCE_DIR}/data/benzil/Spectrum20160720NoCC.nxs" )
+set( BENZIL_EVENT_NXS_PREFIX "${CMAKE_SOURCE_DIR}/data/benzil/CORELLI_" )
+set( BENZIL_EVENT_NXS_MIN "00" )
+set( BENZIL_EVENT_NXS_MAX "35" )
+set( BIXBYTE_SA_NXS "${CMAKE_SOURCE_DIR}/data/bixbyte/solidAngle.nxs" )
+set( BIXBYTE_FLUX_NXS "${CMAKE_SOURCE_DIR}/data/bixbyte/spectra.nxs" )
+set( BIXBYTE_EVENT_NXS_PREFIX "${CMAKE_SOURCE_DIR}/data/bixbyte/TOPAZ_" )
+set( BIXBYTE_EVENT_NXS_MIN "40704" )
+set( BIXBYTE_EVENT_NXS_MAX "40725" )
+
+
 configure_file( ${source_path} ${destination_path} )
 
 add_executable(calculateIntersections-test src/calculateIntersections.cpp src/calculateIntersections-test.cpp)
