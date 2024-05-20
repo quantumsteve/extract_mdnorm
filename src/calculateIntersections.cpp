@@ -4,7 +4,7 @@
 #include <cassert>
 
 // function to  compare two intersections (h,k,l,Momentum) by Momentum
-inline bool compareMomentum(const std::array<float, 4> &v1, const std::array<float, 4> &v2) {
+static bool compareMomentum(const std::array<float, 4> &v1, const std::array<float, 4> &v2) {
   return (v1[3] < v2[3]);
 }
 

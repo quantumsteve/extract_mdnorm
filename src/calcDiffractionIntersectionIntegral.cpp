@@ -14,7 +14,7 @@
  * @param sp :: A workspace index for a spectrum in integrFlux to interpolate.
  * @param yValues :: A vector to save the results.
  */
-void calcIntegralsForIntersections(const std::vector<float> &xValues,
+static void calcIntegralsForIntersections(const std::vector<float> &xValues,
                                    const boost::histogram::axis::regular<float> &integrFlux_x,
                                    const std::vector<std::vector<double>> &integrFlux_y, const size_t sp,
                                    std::vector<double> &yValues) {
