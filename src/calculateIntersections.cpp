@@ -2,8 +2,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <iomanip>
-#include <iostream>
 
 /** Uses std::compare_exchange_weak to update the atomic value f = op(f, d)
  * Used to improve parallel scaling in algorithms MDNormDirectSC and MDNormSCD

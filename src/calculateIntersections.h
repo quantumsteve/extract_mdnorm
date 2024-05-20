@@ -5,7 +5,6 @@
 
 #include <array>
 #include <atomic>
-#include <iostream>
 #include <vector>
 
 // function to  compare two intersections (h,k,l,Momentum) by Momentum

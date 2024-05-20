@@ -47,14 +47,11 @@ set( source_name "src/validation_data_filepath.h.in" )
 set( source_path "${CMAKE_SOURCE_DIR}/${source_name}" )
 set( destination_name "src/validation_data_filepath.h" )
 set( destination_path "${CMAKE_SOURCE_DIR}/${destination_name}" )
-set( CALC_INTERSECTIONS_FILE "${CMAKE_SOURCE_DIR}/data/corelli_demo.txt" )
-set( FLUXDET_TO_IDX_FILE "${CMAKE_SOURCE_DIR}/data/fluxDetToIdx.txt" )
-set( SA_WS_FILE "${CMAKE_SOURCE_DIR}/data/solidAngDetToIdx.txt" )
+
 set( FLUX_NXS "${CMAKE_SOURCE_DIR}/data/SingleCrystalDiffuseReduction_Flux.nxs" )
 set( SA_NXS "${CMAKE_SOURCE_DIR}/data/SingleCrystalDiffuseReduction_SA.nxs" )
 set( EVENT_NXS "${CMAKE_SOURCE_DIR}/data/CORELLI_29782_Before_MDNorm.nxs" )
 set( NORM_NXS "${CMAKE_SOURCE_DIR}/data/CORELLI_29782_After_MDNorm_symm.nxs" )
-set( USE_DETS_FILE "${CMAKE_SOURCE_DIR}/data/use_det.txt")
 set( ROT_NXS "${CMAKE_SOURCE_DIR}/data/CORELLI_29782_rotations.hdf5")
 set( GARNET_EVENT_NXS "${CMAKE_SOURCE_DIR}/data/garnet/CORELLI_BEFORE_MDNorm.nxs")
 set( GARNET_SA_NXS "${CMAKE_SOURCE_DIR}/data/garnet/solid_angle_2p5-8.nxs")
@@ -76,7 +73,7 @@ set( BIXBYITE_EVENT_NXS_MAX "40725" )
 configure_file( ${source_path} ${destination_path} )
 
 add_executable(calculateIntersections-test src/calculateIntersections.cpp src/calculateIntersections-test.cpp)
-target_link_libraries(calculateIntersections-test Eigen3::Eigen Catch2::Catch2WithMain)
+target_link_libraries(calculateIntersections-test HighFive Eigen3::Eigen Catch2::Catch2WithMain)
 
 add_executable(calcDiffractionIntersectionIntegral-test src/calculateIntersections.cpp
                                                         src/calcDiffractionIntersectionIntegral.cpp
