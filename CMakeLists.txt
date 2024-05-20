@@ -45,8 +45,8 @@ FetchContent_MakeAvailable(HighFive)
 # header containing all the filepaths as preprocessor defines
 set( source_name "src/validation_data_filepath.h.in" )
 set( source_path "${CMAKE_SOURCE_DIR}/${source_name}" )
-set( destination_name "src/validation_data_filepath.h" )
-set( destination_path "${CMAKE_SOURCE_DIR}/${destination_name}" )
+set( destination_name "validation_data_filepath.h" )
+set( destination_path "${PROJECT_BINARY_DIR}/include/${destination_name}" )
 
 set( SA_NXS "${CMAKE_SOURCE_DIR}/data/SingleCrystalDiffuseReduction_SA.nxs" )
 set( FLUX_NXS "${CMAKE_SOURCE_DIR}/data/SingleCrystalDiffuseReduction_Flux.nxs" )
@@ -75,30 +75,31 @@ configure_file( ${source_path} ${destination_path} )
 
 add_executable(calculateIntersections-test src/calculateIntersections.cpp src/calculateIntersections-test.cpp)
 target_link_libraries(calculateIntersections-test HighFive Eigen3::Eigen Catch2::Catch2WithMain)
+target_include_directories(calculateIntersections-test PRIVATE ${PROJECT_BINARY_DIR}/include)
 
 add_executable(calcDiffractionIntersectionIntegral-test src/calculateIntersections.cpp
                                                         src/calcDiffractionIntersectionIntegral.cpp
                                                         src/calcDiffractionIntersectionIntegral-test.cpp )
-
 target_link_libraries(calcDiffractionIntersectionIntegral-test HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
+target_include_directories(calcDiffractionIntersectionIntegral-test PRIVATE ${PROJECT_BINARY_DIR}/include)
 
 add_executable(garnet_reduction_corelli src/calculateIntersections.cpp
                                         src/calcDiffractionIntersectionIntegral.cpp
                                         src/garnet_reduction_corelli.cpp )
-
 target_link_libraries(garnet_reduction_corelli HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
+target_include_directories(garnet_reduction_corelli PRIVATE ${PROJECT_BINARY_DIR}/include)
 
 add_executable(benzil_corelli src/calculateIntersections.cpp
                                         src/calcDiffractionIntersectionIntegral.cpp
                                         src/benzil_corelli.cpp )
-
 target_link_libraries(benzil_corelli HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
+target_include_directories(benzil_corelli PRIVATE ${PROJECT_BINARY_DIR}/include)
 
 add_executable(bixbyite_topaz src/calculateIntersections.cpp
                                         src/calcDiffractionIntersectionIntegral.cpp
                                         src/bixbyite_topaz.cpp )
-
 target_link_libraries(bixbyite_topaz HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
+target_include_directories(bixbyite_topaz PRIVATE ${PROJECT_BINARY_DIR}/include)
 
 include( CTest )
 
