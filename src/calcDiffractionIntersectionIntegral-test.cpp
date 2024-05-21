@@ -1,3 +1,4 @@
+#include "LoadFluxWorkspace.h"
 #include "calcDiffractionIntersectionIntegral.h"
 #include "calculateIntersections.h"
 
@@ -71,7 +72,7 @@ TEST_CASE("calculateIntersections") {
     Eigen::Matrix3f m_W;
     m_W << 1.f, 1.f, 0.f, 1.f, -1.f, 0.f, 0.f, 0.f, 1.f;
 
-    std::unordered_map<int32_t, size_t> fluxDetToIdx;
+    // std::unordered_map<int32_t, size_t> fluxDetToIdx;
     std::unordered_map<int32_t, size_t> solidAngDetToIdx;
 
     std::vector<std::vector<double>> solidAngleWS;
@@ -113,57 +114,11 @@ TEST_CASE("calculateIntersections") {
       ++idx;
     }
 
-    HighFive::File file(FLUX_NXS, HighFive::File::ReadOnly);
-    HighFive::Group group = file.getGroup("mantid_workspace_1");
-    HighFive::Group group2 = group.getGroup("workspace");
-    HighFive::DataSet dataset = group2.getDataSet("axis1");
-    dims = dataset.getDimensions();
-    std::vector<float> read_data_f;
-    dataset.read(read_data_f);
-    REQUIRE(dims.size() == 1);
-    const reg integrFlux_x(read_data_f.size() - 1, read_data_f.front(), read_data_f.back(), "integrFlux_x");
-    REQUIRE_THAT(integrFlux_x.bin(0).width(), Catch::Matchers::WithinAbs(read_data_f[1] - read_data_f[0], 1e-4));
-
-    dataset = group2.getDataSet("values");
-    dims = dataset.getDimensions();
-    dataset.read(read_data);
-
-    REQUIRE(dims.size() == 2);
-    REQUIRE(dims[0] == 1);
-    std::vector<std::vector<double>> integrFlux_y{1};
-    for (size_t j = 0; j < dims[1]; ++j)
-      integrFlux_y[0].push_back(read_data[j]);
-
-    group2 = group.getGroup("instrument");
-    HighFive::Group group3 = group2.getGroup("detector");
-    dataset = group3.getDataSet("detector_count");
-    dims = dataset.getDimensions();
-    REQUIRE(dims.size() == 1);
-    REQUIRE(dims[0] == 1);
-    dataset.read(dc_data);
-
-    dataset = group3.getDataSet("detector_list");
-    dims = dataset.getDimensions();
-    REQUIRE(dims.size() == 1);
-    REQUIRE(dims[0] == 372736);
-    dataset.read(detIDs);
-
-    detector = 0;
-    idx = 0;
-    for (auto &value : dc_data) {
-      for (int i = 0; i < value; ++i) {
-        fluxDetToIdx.emplace(detIDs[detector++], idx);
-      }
-      ++idx;
-    }
-
-    group3 = group2.getGroup("physical_detectors");
-    dataset = group3.getDataSet("number_of_detectors");
-    dims = dataset.getDimensions();
-    REQUIRE(dims.size() == 1);
-    REQUIRE(dims[0] == 1);
-    size_t ndets;
-    dataset.read(ndets);
+    LoadFluxWorkspace flux(FLUX_NXS);
+    const reg integrFlux_x = flux.getFluxAxis();
+    const std::vector<std::vector<double>> integrFlux_y = flux.getFluxValues();
+    const std::unordered_map<int32_t, size_t> fluxDetToIdx = flux.getFluxDetToIdx();
+    const size_t ndets = flux.getNDets();
 
     std::vector<float> lowValues, highValues;
 
@@ -172,7 +127,7 @@ TEST_CASE("calculateIntersections") {
     HighFive::Group event_group2 = event_group.getGroup("experiment0");
     HighFive::Group event_group3 = event_group2.getGroup("logs");
     HighFive::Group event_group4 = event_group3.getGroup("MDNorm_low");
-    dataset = event_group4.getDataSet("value");
+    auto dataset = event_group4.getDataSet("value");
     dims = dataset.getDimensions();
     REQUIRE(dims.size() == 1);
     REQUIRE(dims[0] == 372736);
