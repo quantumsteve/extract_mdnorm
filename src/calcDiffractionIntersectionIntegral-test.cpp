@@ -1,4 +1,4 @@
-
+#include "LoadEventWorkspace.h"
 #include "LoadFluxWorkspace.h"
 #include "LoadSolidAngleWorkspace.h"
 #include "calcDiffractionIntersectionIntegral.h"
@@ -8,7 +8,7 @@
 #include "validation_data_filepath.h"
 
 #include <boost/histogram.hpp>
-#include <boost/math/constants/constants.hpp>
+
 #include <highfive/eigen.hpp>
 #include <highfive/highfive.hpp>
 
@@ -73,8 +73,8 @@ TEST_CASE("calculateIntersections") {
     m_W << 1.f, 1.f, 0.f, 1.f, -1.f, 0.f, 0.f, 0.f, 1.f;
 
     LoadSolidAngleWorkspace solidAngle(SA_NXS);
-    std::unordered_map<int32_t, size_t> solidAngDetToIdx = solidAngle.getSolidAngDetToIdx();
-    std::vector<std::vector<double>> solidAngleWS = solidAngle.getSolidAngleValues();
+    const std::unordered_map<int32_t, size_t> solidAngDetToIdx = solidAngle.getSolidAngDetToIdx();
+    const std::vector<std::vector<double>> solidAngleWS = solidAngle.getSolidAngleValues();
 
     LoadFluxWorkspace flux(FLUX_NXS);
     const reg integrFlux_x = flux.getFluxAxis();
@@ -82,71 +82,15 @@ TEST_CASE("calculateIntersections") {
     const std::unordered_map<int32_t, size_t> fluxDetToIdx = flux.getFluxDetToIdx();
     const size_t ndets = flux.getNDets();
 
-    std::vector<float> lowValues, highValues;
+    LoadEventWorkspace eventWS(EVENT_NXS);
 
-    HighFive::File event_file(EVENT_NXS, HighFive::File::ReadOnly);
-    HighFive::Group event_group = event_file.getGroup("MDEventWorkspace");
-    HighFive::Group event_group2 = event_group.getGroup("experiment0");
-    HighFive::Group event_group3 = event_group2.getGroup("logs");
-    HighFive::Group event_group4 = event_group3.getGroup("MDNorm_low");
-    auto dataset = event_group4.getDataSet("value");
-    auto dims = dataset.getDimensions();
-    REQUIRE(dims.size() == 1);
-    REQUIRE(dims[0] == 372736);
-    dataset.read(lowValues);
-    event_group4 = event_group3.getGroup("MDNorm_high");
-    dataset = event_group4.getDataSet("value");
-    dims = dataset.getDimensions();
-    REQUIRE(dims.size() == 1);
-    REQUIRE(dims[0] == 372736);
-    dataset.read(highValues);
-
-    event_group4 = event_group3.getGroup("gd_prtn_chrg");
-    dataset = event_group4.getDataSet("value");
-    dims = dataset.getDimensions();
-    REQUIRE(dims.size() == 1);
-    REQUIRE(dims[0] == 1);
-    double protonCharge;
-    dataset.read(protonCharge);
-
-    std::vector<float> thetaValues, phiValues;
-    event_group3 = event_group2.getGroup("instrument");
-    event_group4 = event_group3.getGroup("physical_detectors");
-    dataset = event_group4.getDataSet("polar_angle");
-    dims = dataset.getDimensions();
-    REQUIRE(dims.size() == 1);
-    REQUIRE(dims[0] == 372736);
-    dataset.read(thetaValues);
-
-#pragma omp parallel for
-    for (auto &value : thetaValues)
-      value *= boost::math::float_constants::degree;
-
-    dataset = event_group4.getDataSet("azimuthal_angle");
-    dims = dataset.getDimensions();
-    REQUIRE(dims.size() == 1);
-    REQUIRE(dims[0] == 372736);
-    dataset.read(phiValues);
-
-#pragma omp parallel for
-    for (auto &value : phiValues)
-      value *= boost::math::float_constants::degree;
-
-    dataset = event_group4.getDataSet("detector_number");
-    dims = dataset.getDimensions();
-    REQUIRE(dims.size() == 1);
-    REQUIRE(dims[0] == 372736);
-    std::vector<int> detIDs;
-    dataset.read(detIDs);
-
-    // const char *EventHeaders[] = {"signal, errorSquared, center (each dim.)",
-    //                              "signal, errorSquared, expInfoIndex, goniometerIndex, detectorId, center (each "
-    //                              "dim.)"};
-    // https://github.com/mantidproject/mantid/blob/c3ea43e4605f6898b84bd95c1196ccd8035364b1/Framework/DataObjects/src/BoxControllerNeXusIO.cpp#L27
-    std::vector<std::vector<double>> events;
-    event_group2 = event_group.getGroup("event_data");
-    dataset = event_group2.getDataSet("event_data");
-    dataset.read(events);
+    const std::vector<float> lowValues = eventWS.getLowValues();
+    const std::vector<float> highValues = eventWS.getHighValues();
+    const double protonCharge = eventWS.getProtonCharge();
+    const std::vector<float> thetaValues = eventWS.getThetaValues();
+    const std::vector<float> phiValues = eventWS.getPhiValues();
+    const std::vector<int> detIDs = eventWS.getDetIDs();
+    const std::vector<std::array<double, 8>> events = eventWS.getEvents();
 
     auto signal = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
                                       std::get<1>(axes), std::get<2>(axes));
@@ -205,7 +149,7 @@ TEST_CASE("calculateIntersections") {
     HighFive::Group norm_group = norm_file.getGroup("MDHistoWorkspace");
     HighFive::Group norm_group2 = norm_group.getGroup("data");
     HighFive::DataSet norm_dataset = norm_group2.getDataSet("signal");
-    dims = norm_dataset.getDimensions();
+    auto dims = norm_dataset.getDimensions();
     REQUIRE(dims.size() == 3);
     REQUIRE(dims[0] == 1);
     REQUIRE(dims[1] == 200);
