@@ -1,4 +1,5 @@
 #include "LoadEventWorkspace.h"
+#include "LoadExtrasWorkspace.h"
 #include "LoadFluxWorkspace.h"
 #include "LoadSolidAngleWorkspace.h"
 #include "calcDiffractionIntersectionIntegral.h"
@@ -49,25 +50,11 @@ TEST_CASE("calculateIntersections") {
 
     MDNorm doctest(hX, kX, lX);
 
-    HighFive::File rot_file(ROT_NXS, HighFive::File::ReadOnly);
-    HighFive::Group rot_group = rot_file.getGroup("expinfo_0");
-    HighFive::DataSet rot_dataset = rot_group.getDataSet("goniometer_0");
-    auto rotMatrix = rot_dataset.read<Eigen::Matrix3f>();
-
-    rot_group = rot_file.getGroup("symmetryOps");
-    auto n_elements = rot_group.getNumberObjects();
-    std::vector<Eigen::Matrix3f> symm;
-    for (size_t i = 0; i < n_elements; ++i) {
-      rot_dataset = rot_group.getDataSet("op_" + std::to_string(i));
-      symm.push_back(rot_dataset.read<Eigen::Matrix3f>());
-    }
-
-    rot_dataset = rot_file.getDataSet("ubmatrix");
-    auto m_UB = rot_dataset.read<Eigen::Matrix3f>();
-
-    std::vector<bool> skip_dets;
-    rot_dataset = rot_file.getDataSet("skip_dets");
-    rot_dataset.read(skip_dets);
+    LoadExtrasWorkspace extras(ROT_NXS);
+    Eigen::Matrix3f rotMatrix = extras.getRotMatrix();
+    std::vector<Eigen::Matrix3f> symm = extras.getSymmMatrices();
+    Eigen::Matrix3f m_UB = extras.getUBMatrix();
+    std::vector<bool> skip_dets = extras.getSkipDets();
 
     Eigen::Matrix3f m_W;
     m_W << 1.f, 1.f, 0.f, 1.f, -1.f, 0.f, 0.f, 0.f, 1.f;
@@ -171,7 +158,6 @@ TEST_CASE("calculateIntersections") {
 
     auto h = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
                                  std::get<1>(axes), std::get<2>(axes));
-
     start = std::chrono::high_resolution_clock::now();
 
 #pragma omp parallel for collapse(2)
