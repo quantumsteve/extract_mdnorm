@@ -80,7 +80,8 @@ target_include_directories(calculateIntersections-test PRIVATE ${PROJECT_BINARY_
 add_executable(calcDiffractionIntersectionIntegral-test src/calculateIntersections.cpp
                                                         src/calcDiffractionIntersectionIntegral.cpp
                                                         src/calcDiffractionIntersectionIntegral-test.cpp
-							src/LoadFluxWorkspace.cpp
+							                                          src/LoadFluxWorkspace.cpp
+                                                        src/LoadSolidAngleWorkspace.cpp
                                                         )
 target_link_libraries(calcDiffractionIntersectionIntegral-test HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
 target_include_directories(calcDiffractionIntersectionIntegral-test PRIVATE ${PROJECT_BINARY_DIR}/include)

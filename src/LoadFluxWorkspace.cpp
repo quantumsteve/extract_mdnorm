@@ -1,8 +1,5 @@
 #include "LoadFluxWorkspace.h"
 
-#include <highfive/eigen.hpp>
-#include <highfive/highfive.hpp>
-
 LoadFluxWorkspace::LoadFluxWorkspace(const std::string &filename) : m_file(filename, HighFive::File::ReadOnly) {}
 
 LoadFluxWorkspace::reg LoadFluxWorkspace::getFluxAxis() {
