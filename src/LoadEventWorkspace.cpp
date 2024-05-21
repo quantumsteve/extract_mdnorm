@@ -78,7 +78,7 @@ std::vector<int> LoadEventWorkspace::getDetIDs() const {
   return detIDs;
 }
 
-std::vector<std::array<double, 8>> LoadEventWorkspace::getEvents() const {
+void LoadEventWorkspace::updateEvents(std::vector<std::array<double, 8>> &events) const {
   // const char *EventHeaders[] = {"signal, errorSquared, center (each dim.)",
   //                              "signal, errorSquared, expInfoIndex, goniometerIndex, detectorId, center (each "
   //                              "dim.)"};
@@ -86,7 +86,5 @@ std::vector<std::array<double, 8>> LoadEventWorkspace::getEvents() const {
   HighFive::Group group = m_file.getGroup("MDEventWorkspace");
   HighFive::Group group2 = group.getGroup("event_data");
   auto dataset = group2.getDataSet("event_data");
-  std::vector<std::array<double, 8>> events;
   dataset.read(events);
-  return events;
 }

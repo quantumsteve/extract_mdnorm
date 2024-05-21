@@ -1,3 +1,7 @@
+#include "LoadEventWorkspace.h"
+#include "LoadExtrasWorkspace.h"
+#include "LoadFluxWorkspace.h"
+#include "LoadSolidAngleWorkspace.h"
 #include "calcDiffractionIntersectionIntegral.h"
 #include "calculateIntersections.h"
 
@@ -6,10 +10,8 @@
 
 #include <boost/histogram.hpp>
 #include <boost/math/constants/constants.hpp>
-#include <highfive/eigen.hpp>
 #include <highfive/highfive.hpp>
 
-#include <atomic>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -57,186 +59,51 @@ TEST_CASE("calculateIntersections") {
     Eigen::Matrix3f m_W;
     m_W << 1.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 1.f;
 
-    std::unordered_map<int32_t, size_t> fluxDetToIdx;
-    std::unordered_map<int32_t, size_t> solidAngDetToIdx;
+    LoadSolidAngleWorkspace solidAngle(BIXBYITE_SA_NXS);
+    const std::unordered_map<int32_t, size_t> solidAngDetToIdx = solidAngle.getSolidAngDetToIdx();
+    const std::vector<std::vector<double>> solidAngleWS = solidAngle.getSolidAngleValues();
 
-    std::vector<std::vector<double>> solidAngleWS;
-    HighFive::File sa_file(BIXBYITE_SA_NXS, HighFive::File::ReadOnly);
-    HighFive::Group sa_group = sa_file.getGroup("mantid_workspace_1");
-    HighFive::Group sa_group2 = sa_group.getGroup("workspace");
-    HighFive::DataSet sa_dataset = sa_group2.getDataSet("values");
-    std::vector<size_t> dims = sa_dataset.getDimensions();
-    REQUIRE(dims.size() == 2);
-    REQUIRE(dims[1] == 1);
-    sa_dataset.read(solidAngleWS);
-
-    sa_group2 = sa_group.getGroup("instrument");
-    HighFive::Group sa_group3 = sa_group2.getGroup("detector");
-    sa_dataset = sa_group3.getDataSet("detector_count");
-    dims = sa_dataset.getDimensions();
-    REQUIRE(dims.size() == 1);
-    REQUIRE(dims[0] == 1638400);
-    std::vector<int> dc_data;
-    sa_dataset.read(dc_data);
-
-    std::vector<int> detIDs;
-    sa_dataset = sa_group3.getDataSet("detector_list");
-    dims = sa_dataset.getDimensions();
-    REQUIRE(dims.size() == 1);
-    REQUIRE(dims[0] == 1638400);
-    sa_dataset.read(detIDs);
-
-    int detector{0};
-    size_t idx{0};
-    for (auto &value : dc_data) {
-      for (int i = 0; i < value; ++i) {
-        solidAngDetToIdx.emplace(detIDs[detector++], idx);
-      }
-      ++idx;
-    }
-
-    HighFive::File file(BIXBYITE_FLUX_NXS, HighFive::File::ReadOnly);
-    HighFive::Group group = file.getGroup("mantid_workspace_1");
-    HighFive::Group group2 = group.getGroup("workspace");
-    HighFive::DataSet dataset = group2.getDataSet("axis1");
-    dims = dataset.getDimensions();
-    REQUIRE(dims.size() == 1);
-    std::vector<double> read_data;
-    dataset.read(read_data);
-    reg integrFlux_x(read_data.size() - 1, read_data.front(), read_data.back(), "integrFlux_x");
-
-    dataset = group2.getDataSet("values");
-    dims = dataset.getDimensions();
-    REQUIRE(dims.size() == 2);
-    REQUIRE(dims[0] == 25);
-    std::vector<std::vector<double>> integrFlux_y;
-    dataset.read(integrFlux_y);
-    REQUIRE(integrFlux_y.size() == 25);
-
-    group2 = group.getGroup("instrument");
-    HighFive::Group group3 = group2.getGroup("detector");
-    dataset = group3.getDataSet("detector_count");
-    dims = dataset.getDimensions();
-    REQUIRE(dims.size() == 1);
-    REQUIRE(dims[0] == 25);
-    dataset.read(dc_data);
-
-    dataset = group3.getDataSet("detector_list");
-    dims = dataset.getDimensions();
-    REQUIRE(dims.size() == 1);
-    REQUIRE(dims[0] == 1638400);
-    dataset.read(detIDs);
-
-    detector = 0;
-    idx = 0;
-    for (auto &value : dc_data) {
-      for (int i = 0; i < value; ++i) {
-        fluxDetToIdx.emplace(detIDs[detector++], idx);
-      }
-      ++idx;
-    }
-    std::cout << "detector: " << detector << std::endl; 
-    group3 = group2.getGroup("physical_detectors");
-    dataset = group3.getDataSet("number_of_detectors");
-    dims = dataset.getDimensions();
-    REQUIRE(dims.size() == 1);
-    REQUIRE(dims[0] == 1);
-    size_t ndets;
-    dataset.read(ndets);
+    LoadFluxWorkspace flux(BIXBYITE_FLUX_NXS);
+    const reg integrFlux_x = flux.getFluxAxis();
+    const std::vector<std::vector<double>> integrFlux_y = flux.getFluxValues();
+    const std::unordered_map<int32_t, size_t> fluxDetToIdx = flux.getFluxDetToIdx();
+    const size_t ndets = flux.getNDets();
 
     std::string rot_filename = std::string(BIXBYITE_EVENT_NXS_PREFIX).append("40704_extra_params.hdf5");
+    LoadExtrasWorkspace extras(rot_filename);
+    Eigen::Matrix3f rotMatrix = extras.getRotMatrix();
+    const std::vector<Eigen::Matrix3f> symm = extras.getSymmMatrices();
+    const Eigen::Matrix3f m_UB = extras.getUBMatrix();
+    const std::vector<bool> skip_dets = extras.getSkipDets();
+
     std::string event_filename = std::string(BIXBYITE_EVENT_NXS_PREFIX).append("40704_BEFORE_MDNorm.nxs");
-    HighFive::File rot_file(rot_filename, HighFive::File::ReadOnly);
-    HighFive::DataSet rot_dataset = rot_file.getDataSet("ubmatrix");
-    auto m_UB = rot_dataset.read<Eigen::Matrix3f>();
 
-    std::vector<bool> skip_dets;
-    rot_dataset = rot_file.getDataSet("skip_dets");
-    rot_dataset.read(skip_dets);
+    LoadEventWorkspace eventWS(event_filename);
+    const std::vector<float> lowValues = eventWS.getLowValues();
+    const std::vector<float> highValues = eventWS.getHighValues();
+    double protonCharge = eventWS.getProtonCharge();
+    const std::vector<float> thetaValues = eventWS.getThetaValues();
+    const std::vector<float> phiValues = eventWS.getPhiValues();
+    const std::vector<int> detIDs = eventWS.getDetIDs();
+    std::vector<std::array<double, 8>> events = eventWS.getEvents();
 
-    std::vector<float> lowValues, highValues;
-    HighFive::File event_file(event_filename, HighFive::File::ReadOnly);
-    HighFive::Group event_group = event_file.getGroup("MDEventWorkspace");
-    HighFive::Group event_group2 = event_group.getGroup("experiment0");
-    HighFive::Group event_group3 = event_group2.getGroup("logs");
-    HighFive::Group event_group4 = event_group3.getGroup("MDNorm_low");
-    dataset = event_group4.getDataSet("value");
-    dims = dataset.getDimensions();
-    REQUIRE(dims.size() == 1);
-    REQUIRE(dims[0] == 1638400);
-    dataset.read(lowValues);
-    event_group4 = event_group3.getGroup("MDNorm_high");
-    dataset = event_group4.getDataSet("value");
-    dims = dataset.getDimensions();
-    REQUIRE(dims.size() == 1);
-    REQUIRE(dims[0] == 1638400);
-    dataset.read(highValues);
-
-    std::vector<float> thetaValues, phiValues;
-    event_group3 = event_group2.getGroup("instrument");
-    event_group4 = event_group3.getGroup("physical_detectors");
-    dataset = event_group4.getDataSet("polar_angle");
-    dims = dataset.getDimensions();
-    REQUIRE(dims.size() == 1);
-    REQUIRE(dims[0] == 1638400);
-    dataset.read(thetaValues);
-
-#pragma omp parallel for
-    for (auto &value : thetaValues)
-      value *= boost::math::float_constants::degree;
-
-    dataset = event_group4.getDataSet("azimuthal_angle");
-    dims = dataset.getDimensions();
-    REQUIRE(dims.size() == 1);
-    REQUIRE(dims[0] == 1638400);
-    dataset.read(phiValues);
-
-#pragma omp parallel for
-    for (auto &value : phiValues)
-      value *= boost::math::float_constants::degree;
-
-    dataset = event_group4.getDataSet("detector_number");
-    dims = dataset.getDimensions();
-    REQUIRE(dims.size() == 1);
-    REQUIRE(dims[0] == 1638400);
-    dataset.read(detIDs);
-    std::vector<std::array<double, 8>> events;
+    std::vector<Eigen::Matrix3f> transforms2;
+    for (const Eigen::Matrix3f &op : symm) {
+      Eigen::Matrix3f transform = m_UB * op * m_W;
+      transforms2.push_back(transform.inverse());
+    }
 
     for (int file_num = BIXBYITE_EVENT_NXS_MIN; file_num <= BIXBYITE_EVENT_NXS_MAX; ++file_num) {
       rot_filename = BIXBYITE_EVENT_NXS_PREFIX + std::to_string(file_num) + "_extra_params.hdf5";
       event_filename = BIXBYITE_EVENT_NXS_PREFIX + std::to_string(file_num) + "_BEFORE_MDNorm.nxs";
-      rot_file = HighFive::File(rot_filename, HighFive::File::ReadOnly);
-      HighFive::Group rot_group = rot_file.getGroup("expinfo_0");
-      rot_dataset = rot_group.getDataSet("goniometer_0");
-      auto rotMatrix = rot_dataset.read<Eigen::Matrix3f>();
 
-      rot_group = rot_file.getGroup("symmetryOps");
-      auto n_elements = rot_group.getNumberObjects();
-      std::vector<Eigen::Matrix3f> symm;
-      for (size_t i = 0; i < n_elements; ++i) {
-        rot_dataset = rot_group.getDataSet("op_" + std::to_string(i));
-        symm.push_back(rot_dataset.read<Eigen::Matrix3f>());
-      }
+      extras = LoadExtrasWorkspace(rot_filename);
+      rotMatrix = extras.getRotMatrix();
 
-      event_file = HighFive::File(event_filename, HighFive::File::ReadOnly);
-      event_group = event_file.getGroup("MDEventWorkspace");
-      event_group2 = event_group.getGroup("experiment0");
-      event_group3 = event_group2.getGroup("logs");
-      event_group4 = event_group3.getGroup("gd_prtn_chrg");
-      dataset = event_group4.getDataSet("value");
-      dims = dataset.getDimensions();
-      REQUIRE(dims.size() == 1);
-      REQUIRE(dims[0] == 1);
-      double protonCharge;
-      dataset.read(protonCharge);
+      eventWS = LoadEventWorkspace(event_filename);
+      protonCharge = eventWS.getProtonCharge();
+      eventWS.updateEvents(events);
 
-      // const char *EventHeaders[] = {"signal, errorSquared, center (each dim.)",
-      //                              "signal, errorSquared, expInfoIndex, goniometerIndex, detectorId, center (each "
-      //                              "dim.)"};
-      // https://github.com/mantidproject/mantid/blob/c3ea43e4605f6898b84bd95c1196ccd8035364b1/Framework/DataObjects/src/BoxControllerNeXusIO.cpp#L27
-      event_group2 = event_group.getGroup("event_data");
-      dataset = event_group2.getDataSet("event_data");
-      dataset.read(events);
       std::vector<std::array<float, 4>> intersections;
       std::vector<float> xValues;
       std::vector<double> yValues;
@@ -245,12 +112,6 @@ TEST_CASE("calculateIntersections") {
       for (const Eigen::Matrix3f &op : symm) {
         Eigen::Matrix3f transform = rotMatrix * m_UB * op * m_W;
         transforms.push_back(transform.inverse());
-      }
-
-      std::vector<Eigen::Matrix3f> transforms2;
-      for (const Eigen::Matrix3f &op : symm) {
-        Eigen::Matrix3f transform = m_UB * op * m_W;
-        transforms2.push_back(transform.inverse());
       }
 
       auto start = std::chrono::high_resolution_clock::now();

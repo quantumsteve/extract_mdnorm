@@ -83,26 +83,41 @@ add_executable(calcDiffractionIntersectionIntegral-test src/calculateIntersectio
                                                         src/LoadFluxWorkspace.cpp
                                                         src/LoadSolidAngleWorkspace.cpp
                                                         src/LoadEventWorkspace.cpp
-							src/LoadExtrasWorkspace.cpp
+                                                        src/LoadExtrasWorkspace.cpp
                                                         )
 target_link_libraries(calcDiffractionIntersectionIntegral-test HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
 target_include_directories(calcDiffractionIntersectionIntegral-test PRIVATE ${PROJECT_BINARY_DIR}/include)
 
 add_executable(garnet_reduction_corelli src/calculateIntersections.cpp
                                         src/calcDiffractionIntersectionIntegral.cpp
-                                        src/garnet_reduction_corelli.cpp )
+                                        src/garnet_reduction_corelli.cpp
+                                        src/LoadFluxWorkspace.cpp
+                                        src/LoadSolidAngleWorkspace.cpp
+                                        src/LoadEventWorkspace.cpp
+                                        src/LoadExtrasWorkspace.cpp
+                                        )
 target_link_libraries(garnet_reduction_corelli HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
 target_include_directories(garnet_reduction_corelli PRIVATE ${PROJECT_BINARY_DIR}/include)
 
 add_executable(benzil_corelli src/calculateIntersections.cpp
                                         src/calcDiffractionIntersectionIntegral.cpp
-                                        src/benzil_corelli.cpp )
+                                        src/benzil_corelli.cpp
+                                        src/LoadFluxWorkspace.cpp
+                                        src/LoadSolidAngleWorkspace.cpp
+                                        src/LoadEventWorkspace.cpp
+                                        src/LoadExtrasWorkspace.cpp
+                                        )
 target_link_libraries(benzil_corelli HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
 target_include_directories(benzil_corelli PRIVATE ${PROJECT_BINARY_DIR}/include)
 
 add_executable(bixbyite_topaz src/calculateIntersections.cpp
                                         src/calcDiffractionIntersectionIntegral.cpp
-                                        src/bixbyite_topaz.cpp )
+                                        src/bixbyite_topaz.cpp 
+                                        src/LoadFluxWorkspace.cpp
+                                        src/LoadSolidAngleWorkspace.cpp
+                                        src/LoadEventWorkspace.cpp
+                                        src/LoadExtrasWorkspace.cpp
+                                        )
 target_link_libraries(bixbyite_topaz HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
 target_include_directories(bixbyite_topaz PRIVATE ${PROJECT_BINARY_DIR}/include)
 

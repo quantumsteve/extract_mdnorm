@@ -4,12 +4,10 @@
 #include "LoadSolidAngleWorkspace.h"
 #include "calcDiffractionIntersectionIntegral.h"
 #include "calculateIntersections.h"
-
-#include "catch2/catch_all.hpp"
 #include "validation_data_filepath.h"
 
+#include "catch2/catch_all.hpp"
 #include <boost/histogram.hpp>
-
 #include <highfive/eigen.hpp>
 #include <highfive/highfive.hpp>
 

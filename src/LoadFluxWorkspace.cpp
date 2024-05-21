@@ -1,5 +1,7 @@
 #include "LoadFluxWorkspace.h"
 
+#include <stdexcept>
+
 LoadFluxWorkspace::LoadFluxWorkspace(const std::string &filename) : m_file(filename, HighFive::File::ReadOnly) {}
 
 LoadFluxWorkspace::reg LoadFluxWorkspace::getFluxAxis() const {
@@ -17,12 +19,15 @@ std::vector<std::vector<double>> LoadFluxWorkspace::getFluxValues() const {
   HighFive::Group group2 = group.getGroup("workspace");
   auto dataset = group2.getDataSet("values");
   auto dims = dataset.getDimensions();
-  std::vector<double> read_data;
-  dataset.read(read_data);
-
-  std::vector<std::vector<double>> integrFlux_y{1};
-  for (size_t j = 0; j < dims[1]; ++j)
-    integrFlux_y[0].push_back(read_data[j]);
+  std::vector<std::vector<double>> integrFlux_y;
+  if (dims.size() == 2) {
+    dataset.read(integrFlux_y);
+  } else if (dims.size() == 1) {
+    integrFlux_y.push_back(std::vector<double>());
+    dataset.read(integrFlux_y[0]);
+  } else {
+    throw std::runtime_error("Number of dimensions must be 1 or 2!");
+  }
   return integrFlux_y;
 }
 

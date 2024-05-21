@@ -15,7 +15,12 @@ public:
   double getProtonCharge() const;
   std::vector<float> getThetaValues() const;
   std::vector<float> getPhiValues() const;
-  std::vector<std::array<double, 8>> getEvents() const;
+  std::vector<std::array<double, 8>> getEvents() const {
+    std::vector<std::array<double, 8>> events;
+    this->updateEvents(events);
+    return events;
+  }
+  void updateEvents(std::vector<std::array<double, 8>> &events) const;
   std::vector<int> getDetIDs() const;
 
 private:
