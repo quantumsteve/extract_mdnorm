@@ -10,10 +10,10 @@
 class LoadExtrasWorkspace {
 public:
   LoadExtrasWorkspace(const std::string &filename);
-  Eigen::Matrix3f getRotMatrix();
-  std::vector<Eigen::Matrix3f> getSymmMatrices();
-  Eigen::Matrix3f getUBMatrix();
-  std::vector<bool> getSkipDets();
+  Eigen::Matrix3f getRotMatrix() const;
+  std::vector<Eigen::Matrix3f> getSymmMatrices() const;
+  Eigen::Matrix3f getUBMatrix() const;
+  std::vector<bool> getSkipDets() const;
 
 private:
   HighFive::File m_file;

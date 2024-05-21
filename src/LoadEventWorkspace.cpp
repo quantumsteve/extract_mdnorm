@@ -4,7 +4,7 @@
 
 LoadEventWorkspace::LoadEventWorkspace(const std::string &filename) : m_file(filename, HighFive::File::ReadOnly) {}
 
-std::vector<float> LoadEventWorkspace::getLowValues() {
+std::vector<float> LoadEventWorkspace::getLowValues() const {
   HighFive::Group group = m_file.getGroup("MDEventWorkspace");
   HighFive::Group group2 = group.getGroup("experiment0");
   HighFive::Group group3 = group2.getGroup("logs");
@@ -15,7 +15,7 @@ std::vector<float> LoadEventWorkspace::getLowValues() {
   return lowValues;
 }
 
-std::vector<float> LoadEventWorkspace::getHighValues() {
+std::vector<float> LoadEventWorkspace::getHighValues() const {
   HighFive::Group group = m_file.getGroup("MDEventWorkspace");
   HighFive::Group group2 = group.getGroup("experiment0");
   HighFive::Group group3 = group2.getGroup("logs");
@@ -26,7 +26,7 @@ std::vector<float> LoadEventWorkspace::getHighValues() {
   return highValues;
 }
 
-double LoadEventWorkspace::getProtonCharge() {
+double LoadEventWorkspace::getProtonCharge() const {
   HighFive::Group group = m_file.getGroup("MDEventWorkspace");
   HighFive::Group group2 = group.getGroup("experiment0");
   HighFive::Group group3 = group2.getGroup("logs");
@@ -37,7 +37,7 @@ double LoadEventWorkspace::getProtonCharge() {
   return protonCharge;
 }
 
-std::vector<float> LoadEventWorkspace::getThetaValues() {
+std::vector<float> LoadEventWorkspace::getThetaValues() const {
   HighFive::Group group = m_file.getGroup("MDEventWorkspace");
   HighFive::Group group2 = group.getGroup("experiment0");
   HighFive::Group group3 = group2.getGroup("instrument");
@@ -52,7 +52,7 @@ std::vector<float> LoadEventWorkspace::getThetaValues() {
   return thetaValues;
 }
 
-std::vector<float> LoadEventWorkspace::getPhiValues() {
+std::vector<float> LoadEventWorkspace::getPhiValues() const {
   HighFive::Group group = m_file.getGroup("MDEventWorkspace");
   HighFive::Group group2 = group.getGroup("experiment0");
   HighFive::Group group3 = group2.getGroup("instrument");
@@ -67,7 +67,7 @@ std::vector<float> LoadEventWorkspace::getPhiValues() {
   return phiValues;
 }
 
-std::vector<int> LoadEventWorkspace::getDetIDs() {
+std::vector<int> LoadEventWorkspace::getDetIDs() const {
   HighFive::Group group = m_file.getGroup("MDEventWorkspace");
   HighFive::Group group2 = group.getGroup("experiment0");
   HighFive::Group group3 = group2.getGroup("instrument");
@@ -78,7 +78,7 @@ std::vector<int> LoadEventWorkspace::getDetIDs() {
   return detIDs;
 }
 
-std::vector<std::array<double, 8>> LoadEventWorkspace::getEvents() {
+std::vector<std::array<double, 8>> LoadEventWorkspace::getEvents() const {
   // const char *EventHeaders[] = {"signal, errorSquared, center (each dim.)",
   //                              "signal, errorSquared, expInfoIndex, goniometerIndex, detectorId, center (each "
   //                              "dim.)"};

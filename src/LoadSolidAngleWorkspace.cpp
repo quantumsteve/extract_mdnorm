@@ -3,7 +3,7 @@
 LoadSolidAngleWorkspace::LoadSolidAngleWorkspace(const std::string &filename)
     : m_file(filename, HighFive::File::ReadOnly) {}
 
-std::vector<std::vector<double>> LoadSolidAngleWorkspace::getSolidAngleValues() {
+std::vector<std::vector<double>> LoadSolidAngleWorkspace::getSolidAngleValues() const {
   std::vector<std::vector<double>> solidAngleWS;
   HighFive::Group group = m_file.getGroup("mantid_workspace_1");
   HighFive::Group group2 = group.getGroup("workspace");
@@ -16,7 +16,7 @@ std::vector<std::vector<double>> LoadSolidAngleWorkspace::getSolidAngleValues() 
   return solidAngleWS;
 }
 
-std::unordered_map<int32_t, size_t> LoadSolidAngleWorkspace::getSolidAngDetToIdx() {
+std::unordered_map<int32_t, size_t> LoadSolidAngleWorkspace::getSolidAngDetToIdx() const {
   HighFive::Group group = m_file.getGroup("mantid_workspace_1");
   HighFive::Group group2 = group.getGroup("instrument");
   HighFive::Group group3 = group2.getGroup("detector");

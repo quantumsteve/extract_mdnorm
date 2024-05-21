@@ -51,10 +51,10 @@ TEST_CASE("calculateIntersections") {
     MDNorm doctest(hX, kX, lX);
 
     LoadExtrasWorkspace extras(ROT_NXS);
-    Eigen::Matrix3f rotMatrix = extras.getRotMatrix();
-    std::vector<Eigen::Matrix3f> symm = extras.getSymmMatrices();
-    Eigen::Matrix3f m_UB = extras.getUBMatrix();
-    std::vector<bool> skip_dets = extras.getSkipDets();
+    const Eigen::Matrix3f rotMatrix = extras.getRotMatrix();
+    const std::vector<Eigen::Matrix3f> symm = extras.getSymmMatrices();
+    const Eigen::Matrix3f m_UB = extras.getUBMatrix();
+    const std::vector<bool> skip_dets = extras.getSkipDets();
 
     Eigen::Matrix3f m_W;
     m_W << 1.f, 1.f, 0.f, 1.f, -1.f, 0.f, 0.f, 0.f, 1.f;

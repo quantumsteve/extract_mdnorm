@@ -10,8 +10,8 @@
 class LoadSolidAngleWorkspace {
 public:
   LoadSolidAngleWorkspace(const std::string &filename);
-  std::vector<std::vector<double>> getSolidAngleValues();
-  std::unordered_map<int32_t, size_t> getSolidAngDetToIdx();
+  std::vector<std::vector<double>> getSolidAngleValues() const;
+  std::unordered_map<int32_t, size_t> getSolidAngDetToIdx() const;
 
 private:
   HighFive::File m_file;

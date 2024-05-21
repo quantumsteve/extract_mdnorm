@@ -2,7 +2,7 @@
 
 LoadFluxWorkspace::LoadFluxWorkspace(const std::string &filename) : m_file(filename, HighFive::File::ReadOnly) {}
 
-LoadFluxWorkspace::reg LoadFluxWorkspace::getFluxAxis() {
+LoadFluxWorkspace::reg LoadFluxWorkspace::getFluxAxis() const {
   HighFive::Group group = m_file.getGroup("mantid_workspace_1");
   HighFive::Group group2 = group.getGroup("workspace");
   HighFive::DataSet dataset = group2.getDataSet("axis1");
@@ -12,7 +12,7 @@ LoadFluxWorkspace::reg LoadFluxWorkspace::getFluxAxis() {
   return reg(read_data_f.size() - 1, read_data_f.front(), read_data_f.back(), "integrFlux_x");
 }
 
-std::vector<std::vector<double>> LoadFluxWorkspace::getFluxValues() {
+std::vector<std::vector<double>> LoadFluxWorkspace::getFluxValues() const {
   HighFive::Group group = m_file.getGroup("mantid_workspace_1");
   HighFive::Group group2 = group.getGroup("workspace");
   auto dataset = group2.getDataSet("values");
@@ -26,7 +26,7 @@ std::vector<std::vector<double>> LoadFluxWorkspace::getFluxValues() {
   return integrFlux_y;
 }
 
-std::unordered_map<int32_t, size_t> LoadFluxWorkspace::getFluxDetToIdx() {
+std::unordered_map<int32_t, size_t> LoadFluxWorkspace::getFluxDetToIdx() const {
   HighFive::Group group = m_file.getGroup("mantid_workspace_1");
   HighFive::Group group2 = group.getGroup("instrument");
   HighFive::Group group3 = group2.getGroup("detector");
@@ -52,7 +52,7 @@ std::unordered_map<int32_t, size_t> LoadFluxWorkspace::getFluxDetToIdx() {
   return fluxDetToIdx;
 }
 
-size_t LoadFluxWorkspace::getNDets() {
+size_t LoadFluxWorkspace::getNDets() const {
   HighFive::Group group = m_file.getGroup("mantid_workspace_1");
   HighFive::Group group2 = group.getGroup("instrument");
   auto group3 = group2.getGroup("physical_detectors");
