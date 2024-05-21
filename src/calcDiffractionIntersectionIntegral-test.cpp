@@ -12,9 +12,7 @@
 #include <highfive/eigen.hpp>
 #include <highfive/highfive.hpp>
 
-#include <atomic>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
 #include <tuple>
 #include <vector>
