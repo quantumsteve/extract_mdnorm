@@ -71,7 +71,7 @@ TEST_CASE("calculateIntersections") {
 
     std::string rot_filename = std::string(BIXBYITE_EVENT_NXS_PREFIX).append("40704_extra_params.hdf5");
     LoadExtrasWorkspace extras(rot_filename);
-    Eigen::Matrix3f rotMatrix = extras.getRotMatrix();
+    // Eigen::Matrix3f rotMatrix = extras.getRotMatrix();
     const std::vector<Eigen::Matrix3f> symm = extras.getSymmMatrices();
     const Eigen::Matrix3f m_UB = extras.getUBMatrix();
     const std::vector<bool> skip_dets = extras.getSkipDets();
@@ -81,11 +81,11 @@ TEST_CASE("calculateIntersections") {
     LoadEventWorkspace eventWS(event_filename);
     const std::vector<float> lowValues = eventWS.getLowValues();
     const std::vector<float> highValues = eventWS.getHighValues();
-    double protonCharge = eventWS.getProtonCharge();
+    // double protonCharge = eventWS.getProtonCharge();
     const std::vector<float> thetaValues = eventWS.getThetaValues();
     const std::vector<float> phiValues = eventWS.getPhiValues();
     const std::vector<int> detIDs = eventWS.getDetIDs();
-    std::vector<std::array<double, 8>> events = eventWS.getEvents();
+    // std::vector<std::array<double, 8>> events = eventWS.getEvents();
 
     std::vector<Eigen::Matrix3f> transforms2;
     for (const Eigen::Matrix3f &op : symm) {
@@ -93,28 +93,32 @@ TEST_CASE("calculateIntersections") {
       transforms2.push_back(transform.inverse());
     }
 
+    std::vector<std::array<float, 4>> intersections;
+    std::vector<float> xValues;
+    std::vector<double> yValues;
+    std::vector<Eigen::Matrix3f> transforms;
+    std::vector<std::array<double, 8>> events;
+
+#pragma omp parallel for private(intersections, xValues, yValues, transforms, events)
     for (int file_num = BIXBYITE_EVENT_NXS_MIN; file_num <= BIXBYITE_EVENT_NXS_MAX; ++file_num) {
-      rot_filename = BIXBYITE_EVENT_NXS_PREFIX + std::to_string(file_num) + "_extra_params.hdf5";
-      event_filename = BIXBYITE_EVENT_NXS_PREFIX + std::to_string(file_num) + "_BEFORE_MDNorm.nxs";
+      auto rot_filename_changes =
+          std::string(BIXBYITE_EVENT_NXS_PREFIX).append(std::to_string(file_num)).append("_extra_params.hdf5");
+      LoadExtrasWorkspace extras_changes(rot_filename_changes);
+      auto rotMatrix = extras_changes.getRotMatrix();
 
-      extras = LoadExtrasWorkspace(rot_filename);
-      rotMatrix = extras.getRotMatrix();
+      auto event_filename_changes =
+          std::string(BIXBYITE_EVENT_NXS_PREFIX).append(std::to_string(file_num)).append("_BEFORE_MDNorm.nxs");
+      LoadEventWorkspace eventWS_changes(event_filename_changes);
+      const double protonCharge = eventWS_changes.getProtonCharge();
+      eventWS_changes.updateEvents(events);
 
-      eventWS = LoadEventWorkspace(event_filename);
-      protonCharge = eventWS.getProtonCharge();
-      eventWS.updateEvents(events);
-
-      std::vector<std::array<float, 4>> intersections;
-      std::vector<float> xValues;
-      std::vector<double> yValues;
-
-      std::vector<Eigen::Matrix3f> transforms;
+      transforms.clear();
       for (const Eigen::Matrix3f &op : symm) {
         Eigen::Matrix3f transform = rotMatrix * m_UB * op * m_W;
         transforms.push_back(transform.inverse());
       }
 
-      auto start = std::chrono::high_resolution_clock::now();
+      // auto start = std::chrono::high_resolution_clock::now();
 #pragma omp parallel for collapse(2) private(intersections, xValues, yValues)
       for (const Eigen::Matrix3f &op : transforms) {
         for (size_t i = 0; i < ndets; ++i) {
@@ -149,9 +153,9 @@ TEST_CASE("calculateIntersections") {
           doctest.calcSingleDetectorNorm(intersections, solid, yValues, signal);
         }
       }
-      auto stop = std::chrono::high_resolution_clock::now();
-      double duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stop - start).count();
-      std::cout << " time: " << duration_total << "s\n";
+      // auto stop = std::chrono::high_resolution_clock::now();
+      // double duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stop - start).count();
+      // std::cout << " time: " << duration_total << "s\n";
 
       /*HighFive::File norm_file(BIXBYITE_EVENT_NXS_PREFIX+"_0_norm.hdf5",
       HighFive::File::ReadOnly); HighFive::Group norm_group = norm_file.getGroup("MDHistoWorkspace"); HighFive::Group
@@ -172,7 +176,7 @@ TEST_CASE("calculateIntersections") {
         }
       }
       //REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));*/
-      start = std::chrono::high_resolution_clock::now();
+      // start = std::chrono::high_resolution_clock::now();
 
 #pragma omp parallel for collapse(2)
       for (const Eigen::Matrix3f &op : transforms2) {
@@ -182,9 +186,9 @@ TEST_CASE("calculateIntersections") {
           h(v[0], v[1], v[2], weight(val[0]));
         }
       }
-      stop = std::chrono::high_resolution_clock::now();
-      duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stop - start).count();
-      std::cout << " time: " << duration_total << "s\n";
+      // stop = std::chrono::high_resolution_clock::now();
+      // duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stop - start).count();
+      // std::cout << " time: " << duration_total << "s\n";
 
       /*HighFive::File data_file(BIXBYITE_EVENT_NXS_PREFIX+"0_data.hdf5",
       HighFive::File::ReadOnly); HighFive::Group data_group = data_file.getGroup("MDHistoWorkspace"); HighFive::Group
