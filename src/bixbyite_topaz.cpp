@@ -9,7 +9,6 @@
 
 #include <boost/histogram.hpp>
 #include <boost/histogram/serialization.hpp>
-#include <boost/math/constants/constants.hpp>
 #include <boost/mpi.hpp>
 #include <highfive/highfive.hpp>
 
@@ -132,7 +131,8 @@ int main(int argc, char *argv[]) {
       transforms.push_back(transform.inverse());
     }
 
-    auto event_filename_changes = std::string(BIXBYITE_EVENT_NXS_PREFIX).append(std::to_string(file_num)).append("_BEFORE_MDNorm.nxs");
+    auto event_filename_changes =
+        std::string(BIXBYITE_EVENT_NXS_PREFIX).append(std::to_string(file_num)).append("_BEFORE_MDNorm.nxs");
     LoadEventWorkspace eventWS_changes(event_filename_changes);
     const double protonCharge = eventWS_changes.getProtonCharge();
 
