@@ -16,17 +16,22 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <optional>
 #include <tuple>
 #include <vector>
 
 int main(int argc, char *argv[]) {
+
+  (void)argc;
+  (void)argv;
+
   namespace mpi = boost::mpi;
   mpi::environment env;
   mpi::communicator world;
 
   using namespace boost::histogram;
   using reg = axis::regular<float>;
-  std::tuple<reg, reg, reg> axes{reg(601, -16.0, 16.0, "x"), reg(601, -16.0, 16.0, "y"), reg(601, -16.0, 16.0, "z")};
+  std::tuple<reg, reg, reg> axes{reg(201, -16.0, 16.0, "x"), reg(201, -16.0, 16.0, "y"), reg(1, -0.1, 0.1, "z")};
 
   std::vector<float> hX, kX, lX;
   {
@@ -74,7 +79,6 @@ int main(int argc, char *argv[]) {
 
   std::string rot_filename = std::string(BIXBYITE_EVENT_NXS_PREFIX).append("40704_extra_params.hdf5");
   LoadExtrasWorkspace extras(rot_filename);
-  // Eigen::Matrix3f rotMatrix = extras.getRotMatrix();
   const std::vector<Eigen::Matrix3f> symm = extras.getSymmMatrices();
   const Eigen::Matrix3f m_UB = extras.getUBMatrix();
   const std::vector<bool> skip_dets = extras.getSkipDets();
@@ -84,11 +88,9 @@ int main(int argc, char *argv[]) {
   LoadEventWorkspace eventWS(event_filename);
   const std::vector<float> lowValues = eventWS.getLowValues();
   const std::vector<float> highValues = eventWS.getHighValues();
-  // double protonCharge = eventWS.getProtonCharge();
   const std::vector<float> thetaValues = eventWS.getThetaValues();
   const std::vector<float> phiValues = eventWS.getPhiValues();
   const std::vector<int> detIDs = eventWS.getDetIDs();
-  // std::vector<std::array<double, 8>> events = eventWS.getEvents();
 
   std::vector<Eigen::Matrix3f> transforms2;
   for (const Eigen::Matrix3f &op : symm) {
@@ -103,10 +105,10 @@ int main(int argc, char *argv[]) {
   std::vector<std::array<double, 8>> events;
 
   int rank = world.rank();
-  int size = BIXBYITE_EVENT_NXS_MAX - BIXBYITE_EVENT_NXS_MIN;
+  int N = BIXBYITE_EVENT_NXS_MAX - BIXBYITE_EVENT_NXS_MIN + 1;
 
-  int count = world.size() / size;
-  int remainder = world.size() % size;
+  int count = N / world.size();
+  int remainder = N % world.size();
   int start, stop;
   if (rank < remainder) {
     // The first 'remainder' ranks get 'count + 1' tasks each
@@ -117,6 +119,7 @@ int main(int argc, char *argv[]) {
     start = rank * count + remainder;
     stop = start + (count - 1);
   }
+  std::cout << N << " " << start << " " << stop << std::endl;
   for (int file_num = BIXBYITE_EVENT_NXS_MIN + start; file_num <= BIXBYITE_EVENT_NXS_MIN + stop; ++file_num) {
     auto rot_filename_changes =
         std::string(BIXBYITE_EVENT_NXS_PREFIX).append(std::to_string(file_num)).append("_extra_params.hdf5");
@@ -135,7 +138,7 @@ int main(int argc, char *argv[]) {
       transforms.push_back(transform.inverse());
     }
 
-    // auto start = std::chrono::high_resolution_clock::now();
+    auto startt = std::chrono::high_resolution_clock::now();
 #pragma omp parallel for collapse(2) private(intersections, xValues, yValues)
     for (const Eigen::Matrix3f &op : transforms) {
       for (size_t i = 0; i < ndets; ++i) {
@@ -170,9 +173,9 @@ int main(int argc, char *argv[]) {
         doctest.calcSingleDetectorNorm(intersections, solid, yValues, signal);
       }
     }
-    // auto stop = std::chrono::high_resolution_clock::now();
-    // double duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stop - start).count();
-    // std::cout << " time: " << duration_total << "s\n";
+    auto stopt = std::chrono::high_resolution_clock::now();
+    double duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
+    std::cout << " time: " << duration_total << "s\n";
 
     /*HighFive::File norm_file(BIXBYITE_EVENT_NXS_PREFIX+"_0_norm.hdf5",
     HighFive::File::ReadOnly); HighFive::Group norm_group = norm_file.getGroup("MDHistoWorkspace"); HighFive::Group
@@ -193,8 +196,8 @@ int main(int argc, char *argv[]) {
       }
     }
     //REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));*/
-    // start = std::chrono::high_resolution_clock::now();
 
+    startt = std::chrono::high_resolution_clock::now();
 #pragma omp parallel for collapse(2)
     for (const Eigen::Matrix3f &op : transforms2) {
       for (auto &val : events) {
@@ -203,9 +206,9 @@ int main(int argc, char *argv[]) {
         h(v[0], v[1], v[2], weight(val[0]));
       }
     }
-    // stop = std::chrono::high_resolution_clock::now();
-    // duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stop - start).count();
-    // std::cout << " time: " << duration_total << "s\n";
+    stopt = std::chrono::high_resolution_clock::now();
+    duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
+    std::cout << " time: " << duration_total << "s\n";
 
     /*HighFive::File data_file(BIXBYITE_EVENT_NXS_PREFIX+"0_data.hdf5",
     HighFive::File::ReadOnly); HighFive::Group data_group = data_file.getGroup("MDHistoWorkspace"); HighFive::Group
@@ -228,31 +231,36 @@ int main(int argc, char *argv[]) {
     std::cout << max_signal << " " <<  ref_max << std::endl;*/
   }
 
-  auto numerator = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
-                                       std::get<1>(axes), std::get<2>(axes));
-
-  auto denominator = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
-                                         std::get<1>(axes), std::get<2>(axes));
-
   using histogram_type = boost::histogram::histogram<
       std::tuple<boost::histogram::axis::regular<float>, boost::histogram::axis::regular<float>,
                  boost::histogram::axis::regular<float>>,
       boost::histogram::dense_storage<boost::histogram::accumulators::thread_safe<double>>>;
 
+  histogram_type numerator, denominator;
+
+  if (world.rank() == 0) {
+    numerator = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
+                                    std::get<1>(axes), std::get<2>(axes));
+
+    denominator = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
+                                      std::get<1>(axes), std::get<2>(axes));
+  }
+
   reduce(world, h, numerator, std::plus<histogram_type>(), 0);
   reduce(world, signal, denominator, std::plus<histogram_type>(), 0);
 
-  /*std::vector<double> out;
-  for (auto &&x : indexed(h))
-    out.push_back(*x);
+  if (world.rank() == 0) {
+    std::vector<double> num;
+    for (auto &&x : indexed(numerator))
+      num.push_back(*x);
 
-  std::vector<double> meow;
-  for (auto &&x : indexed(signal))
-    meow.push_back(*x);
+    std::vector<double> denom;
+    for (auto &&x : indexed(denominator))
+      denom.push_back(*x);
 
-  std::ofstream out_strm("meow.txt");
-  for (size_t i = 0; i < out.size(); ++i)
-    out_strm << out[i]/meow[i] << '\n';
-  */
+    std::ofstream out_strm("meow.txt");
+    for (size_t i = 0; i < num.size(); ++i)
+      out_strm << num[i] / denom[i] << '\n';
+  }
   return 0;
 }
