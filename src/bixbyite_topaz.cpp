@@ -126,17 +126,15 @@ int main(int argc, char *argv[]) {
     LoadExtrasWorkspace extras_changes(rot_filename_changes);
     auto rotMatrix = extras_changes.getRotMatrix();
 
-    auto event_filename_changes =
-        std::string(BIXBYITE_EVENT_NXS_PREFIX).append(std::to_string(file_num)).append("_BEFORE_MDNorm.nxs");
-    LoadEventWorkspace eventWS_changes(event_filename_changes);
-    const double protonCharge = eventWS_changes.getProtonCharge();
-    eventWS_changes.updateEvents(events);
-
     transforms.clear();
     for (const Eigen::Matrix3f &op : symm) {
       Eigen::Matrix3f transform = rotMatrix * m_UB * op * m_W;
       transforms.push_back(transform.inverse());
     }
+
+    auto event_filename_changes = std::string(BIXBYITE_EVENT_NXS_PREFIX).append(std::to_string(file_num)).append("_BEFORE_MDNorm.nxs");
+    LoadEventWorkspace eventWS_changes(event_filename_changes);
+    const double protonCharge = eventWS_changes.getProtonCharge();
 
     auto startt = std::chrono::high_resolution_clock::now();
 #pragma omp parallel for collapse(2) private(intersections, xValues, yValues)
@@ -197,6 +195,8 @@ int main(int argc, char *argv[]) {
     }
     //REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));*/
 
+    eventWS_changes.updateEvents(events);
+
     startt = std::chrono::high_resolution_clock::now();
 #pragma omp parallel for collapse(2)
     for (const Eigen::Matrix3f &op : transforms2) {
@@ -230,6 +230,7 @@ int main(int argc, char *argv[]) {
     //REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));
     std::cout << max_signal << " " <<  ref_max << std::endl;*/
   }
+
   events.clear();
   events.shrink_to_fit();
   using histogram_type = boost::histogram::histogram<
