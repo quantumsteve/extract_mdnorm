@@ -230,7 +230,8 @@ int main(int argc, char *argv[]) {
     //REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));
     std::cout << max_signal << " " <<  ref_max << std::endl;*/
   }
-
+  events.clear();
+  events.shrink_to_fit();
   using histogram_type = boost::histogram::histogram<
       std::tuple<boost::histogram::axis::regular<float>, boost::histogram::axis::regular<float>,
                  boost::histogram::axis::regular<float>>,
