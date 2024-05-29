@@ -19,11 +19,12 @@
 
 int main(int argc, char *argv[]) {
 
-  (void)argc;
-  (void)argv;
-
   namespace mpi = boost::mpi;
-  mpi::environment env;
+  namespace mt = mpi::threading;
+  mpi::environment env(argc, argv, mt::funneled);
+  if (env.thread_level() < mt::funneled) {
+    env.abort(-1);
+  }
   mpi::communicator world;
 
   using namespace boost::histogram;
@@ -166,7 +167,7 @@ int main(int argc, char *argv[]) {
     }
     auto stopt = std::chrono::high_resolution_clock::now();
     double duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
-    std::cout << " time: " << world.rank() << " " << duration_total << "s\n";
+    // std::cout << " time: " << world.rank() << " " << duration_total << "s\n";
 
     /*HighFive::File norm_file(BENZIL_EVENT_NXS_PREFIX + "0_norm.hdf5",
     HighFive::File::ReadOnly); HighFive::Group norm_group = norm_file.getGroup("MDHistoWorkspace"); HighFive::Group

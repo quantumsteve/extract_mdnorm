@@ -21,11 +21,12 @@
 
 int main(int argc, char *argv[]) {
 
-  (void)argc;
-  (void)argv;
-
   namespace mpi = boost::mpi;
-  mpi::environment env;
+  namespace mt = mpi::threading;
+  mpi::environment env(argc, argv, mt::funneled);
+  if (env.thread_level() < mt::funneled) {
+    env.abort(-1);
+  }
   mpi::communicator world;
 
   using namespace boost::histogram;
