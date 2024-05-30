@@ -19,6 +19,17 @@
 #include <tuple>
 #include <vector>
 
+using histogram_type = boost::histogram::histogram<
+    std::tuple<boost::histogram::axis::regular<float>, boost::histogram::axis::regular<float>,
+               boost::histogram::axis::regular<float>>,
+    boost::histogram::dense_storage<boost::histogram::accumulators::thread_safe<double>>>;
+
+namespace boost {
+namespace mpi {
+template <> struct is_commutative<std::plus<histogram_type>, histogram_type> : mpl::true_ {};
+} // namespace mpi
+} // namespace boost
+
 int main(int argc, char *argv[]) {
 
   namespace mpi = boost::mpi;
@@ -234,10 +245,6 @@ int main(int argc, char *argv[]) {
 
   events.clear();
   events.shrink_to_fit();
-  using histogram_type = boost::histogram::histogram<
-      std::tuple<boost::histogram::axis::regular<float>, boost::histogram::axis::regular<float>,
-                 boost::histogram::axis::regular<float>>,
-      boost::histogram::dense_storage<boost::histogram::accumulators::thread_safe<double>>>;
 
   histogram_type numerator, denominator;
 

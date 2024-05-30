@@ -17,6 +17,17 @@
 #include <tuple>
 #include <vector>
 
+using histogram_type = boost::histogram::histogram<
+    std::tuple<boost::histogram::axis::regular<float>, boost::histogram::axis::regular<float>,
+               boost::histogram::axis::regular<float>>,
+    boost::histogram::dense_storage<boost::histogram::accumulators::thread_safe<double>>>;
+
+namespace boost {
+namespace mpi {
+template <> struct is_commutative<std::plus<histogram_type>, histogram_type> : mpl::true_ {};
+} // namespace mpi
+} // namespace boost
+
 int main(int argc, char *argv[]) {
 
   namespace mpi = boost::mpi;
@@ -29,8 +40,9 @@ int main(int argc, char *argv[]) {
 
   using namespace boost::histogram;
   using reg = axis::regular<float>;
-  std::tuple<reg, reg, reg> axes{reg(603, -7.5375, 7.5375, "x"), reg(603, -13.16524, 13.16524, "y"),
-                                 reg(1, -0.5, 0.5, "z")};
+  // std::tuple<reg, reg, reg> axes{reg(603, -7.5375, 7.5375, "x"), reg(603, -13.16524, 13.16524, "y"),
+  //                               reg(1, -0.5, 0.5, "z")};
+  std::tuple<reg, reg, reg> axes{reg(201, -10., 10., "x"), reg(603, -10., 10., "y"), reg(201, -10., 10., "z")};
 
   std::vector<float> hX, kX, lX;
   {
@@ -226,10 +238,6 @@ int main(int argc, char *argv[]) {
 
   events.clear();
   events.shrink_to_fit();
-  using histogram_type = boost::histogram::histogram<
-      std::tuple<boost::histogram::axis::regular<float>, boost::histogram::axis::regular<float>,
-                 boost::histogram::axis::regular<float>>,
-      boost::histogram::dense_storage<boost::histogram::accumulators::thread_safe<double>>>;
 
   histogram_type numerator, denominator;
 
