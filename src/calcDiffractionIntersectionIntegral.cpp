@@ -60,7 +60,7 @@ static void calcIntegralsForIntersections(const std::vector<float> &xValues,
     float x0 = integrFlux_x.bin(j).lower();
     double y0 = yData[j];
     double y1 = yData[j + 1];
-    yValues[i] = std::lerp(y0, y1, (xi - x0) * inv_step);
+    yValues[i] = std::lerp(y0, y1, static_cast<double>((xi - x0) * inv_step));
   }
 
   std::fill(yValues.begin() + iMax, yValues.end(), yMax);
