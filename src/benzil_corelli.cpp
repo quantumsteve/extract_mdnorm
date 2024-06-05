@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
   using reg = axis::regular<float>;
   // std::tuple<reg, reg, reg> axes{reg(603, -7.5375, 7.5375, "x"), reg(603, -13.16524, 13.16524, "y"),
   //                               reg(1, -0.5, 0.5, "z")};
-  std::tuple<reg, reg, reg> axes{reg(201, -10., 10., "x"), reg(603, -10., 10., "y"), reg(201, -10., 10., "z")};
+  std::tuple<reg, reg, reg> axes{reg(201, -10., 10., "x"), reg(201, -10., 10., "y"), reg(201, -10., 10., "z")};
 
   std::vector<float> hX, kX, lX;
   {
@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
     start = rank * count + remainder;
     stop = start + (count - 1);
   }
-  std::cout << N << " " << start << " " << stop << std::endl;
+  std::cout << "rank: " << rank << " " << N << " " << start << " " << stop << std::endl;
   for (int file_num = BENZIL_EVENT_NXS_MIN + start; file_num <= BENZIL_EVENT_NXS_MIN + stop; ++file_num) {
     auto rot_filename_changes =
         std::string(BENZIL_EVENT_NXS_PREFIX).append(std::to_string(file_num)).append("_extra_params.hdf5");
@@ -179,7 +179,7 @@ int main(int argc, char *argv[]) {
     }
     auto stopt = std::chrono::high_resolution_clock::now();
     double duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
-    // std::cout << " time: " << world.rank() << " " << duration_total << "s\n";
+    std::cout << "rank: " << rank << " MDNorm time: " << duration_total << "s\n";
 
     /*HighFive::File norm_file(BENZIL_EVENT_NXS_PREFIX + "0_norm.hdf5",
     HighFive::File::ReadOnly); HighFive::Group norm_group = norm_file.getGroup("MDHistoWorkspace"); HighFive::Group
@@ -208,12 +208,12 @@ int main(int argc, char *argv[]) {
       for (auto &val : events) {
         Eigen::Vector3f v(val[5], val[6], val[7]);
         v = op * v;
-        h(v[0], v[1], v[2]); //, weight(val[0]));
+        h(v[0], v[1], v[2], weight(val[0]));
       }
     }
     stopt = std::chrono::high_resolution_clock::now();
     duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
-    std::cout << " time: " << world.rank() << " " << duration_total << "s\n";
+    std::cout << "rank: " << rank << " BinMD time: " << duration_total << "s\n";
 
     /*HighFive::File data_file(BENZIL_EVENT_NXS_PREFIX + "0_data.hdf5",
     HighFive::File::ReadOnly); HighFive::Group data_group = data_file.getGroup("MDHistoWorkspace"); HighFive::Group
@@ -249,8 +249,12 @@ int main(int argc, char *argv[]) {
                                       std::get<1>(axes), std::get<2>(axes));
   }
 
+  auto startt = std::chrono::high_resolution_clock::now();
   reduce(world, h, numerator, std::plus<histogram_type>(), 0);
   reduce(world, signal, denominator, std::plus<histogram_type>(), 0);
+  auto stopt = std::chrono::high_resolution_clock::now();
+  auto duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
+  std::cout << "rank: " << rank << " reduce time: " << duration_total << "s\n";
 
   if (world.rank() == 0) {
     std::vector<double> num;

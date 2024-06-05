@@ -182,7 +182,7 @@ int main(int argc, char *argv[]) {
     }
     auto stopt = std::chrono::high_resolution_clock::now();
     double duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
-    std::cout << "rank: "  << rank << " MDNorm time: " << duration_total << "s\n";
+    std::cout << "rank: " << rank << " MDNorm time: " << duration_total << "s\n";
 
     /*HighFive::File norm_file(BIXBYITE_EVENT_NXS_PREFIX+"_0_norm.hdf5",
     HighFive::File::ReadOnly); HighFive::Group norm_group = norm_file.getGroup("MDHistoWorkspace"); HighFive::Group
@@ -261,7 +261,6 @@ int main(int argc, char *argv[]) {
   auto stopt = std::chrono::high_resolution_clock::now();
   auto duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
   std::cout << "rank: " << rank << " reduce time: " << duration_total << "s\n";
-
 
   if (world.rank() == 0) {
     std::vector<double> num;
