@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <numeric>
 
 // function to  compare two intersections (h,k,l,Momentum) by Momentum
 static bool compareMomentum(const std::array<float, 4> &v1, const std::array<float, 4> &v2) {

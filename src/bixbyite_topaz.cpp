@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) {
     const double protonCharge = eventWS_changes.getProtonCharge();
 
     auto startt = std::chrono::high_resolution_clock::now();
-#pragma omp parallel for collapse(2) private(intersections, xValues, yValues)
+#pragma omp parallel for collapse(2) private(idx, intersections, xValues, yValues)
     for (const Eigen::Matrix3f &op : transforms) {
       for (size_t i = 0; i < ndets; ++i) {
         if (skip_dets[i])
