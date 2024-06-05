@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
   std::vector<std::array<double, 8>> events;
 
   int rank = world.rank();
-  int N = BIXBYITE_EVENT_NXS_MAX - BIXBYITE_EVENT_NXS_MIN + 1;
+  int N = BENZIL_EVENT_NXS_MAX - BENZIL_EVENT_NXS_MIN + 1;
 
   int count = N / world.size();
   int remainder = N % world.size();

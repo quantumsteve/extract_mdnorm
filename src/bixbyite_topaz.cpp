@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
   using namespace boost::histogram;
   using reg = axis::regular<float>;
-  std::tuple<reg, reg, reg> axes{reg(201, -16.0, 16.0, "x"), reg(201, -16.0, 16.0, "y"), reg(1, -0.1, 0.1, "z")};
+  std::tuple<reg, reg, reg> axes{reg(601, -16.0, 16.0, "x"), reg(601, -16.0, 16.0, "y"), reg(601, -16.0, 16.0, "z")};
 
   std::vector<float> hX, kX, lX;
   {
@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
     start = rank * count + remainder;
     stop = start + (count - 1);
   }
-  std::cout << N << " " << start << " " << stop << std::endl;
+  std::cout << "rank: " << rank << " " << N << " " << start << " " << stop << std::endl;
   for (int file_num = BIXBYITE_EVENT_NXS_MIN + start; file_num <= BIXBYITE_EVENT_NXS_MIN + stop; ++file_num) {
     auto rot_filename_changes =
         std::string(BIXBYITE_EVENT_NXS_PREFIX).append(std::to_string(file_num)).append("_extra_params.hdf5");
@@ -165,9 +165,6 @@ int main(int argc, char *argv[]) {
           continue;
         }
 
-        // std::cout << "theta: " << thetaValues[i] << std::endl;
-        // std::cout << "phi: " << phiValues[i] << std::endl;
-
         doctest.calculateIntersections(signal, intersections, thetaValues[i], phiValues[i], op, lowValues[i],
                                        highValues[i]);
 
@@ -185,7 +182,7 @@ int main(int argc, char *argv[]) {
     }
     auto stopt = std::chrono::high_resolution_clock::now();
     double duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
-    std::cout << " time: " << duration_total << "s\n";
+    std::cout << "rank: "  << rank << " MDNorm time: " << duration_total << "s\n";
 
     /*HighFive::File norm_file(BIXBYITE_EVENT_NXS_PREFIX+"_0_norm.hdf5",
     HighFive::File::ReadOnly); HighFive::Group norm_group = norm_file.getGroup("MDHistoWorkspace"); HighFive::Group
@@ -220,7 +217,7 @@ int main(int argc, char *argv[]) {
     }
     stopt = std::chrono::high_resolution_clock::now();
     duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
-    std::cout << " time: " << duration_total << "s\n";
+    std::cout << "rank: " << rank << " BinMD time: " << duration_total << "s\n";
 
     /*HighFive::File data_file(BIXBYITE_EVENT_NXS_PREFIX+"0_data.hdf5",
     HighFive::File::ReadOnly); HighFive::Group data_group = data_file.getGroup("MDHistoWorkspace"); HighFive::Group
@@ -256,8 +253,15 @@ int main(int argc, char *argv[]) {
                                       std::get<1>(axes), std::get<2>(axes));
   }
 
+  auto startt = std::chrono::high_resolution_clock::now();
+
   reduce(world, h, numerator, std::plus<histogram_type>(), 0);
   reduce(world, signal, denominator, std::plus<histogram_type>(), 0);
+
+  auto stopt = std::chrono::high_resolution_clock::now();
+  auto duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
+  std::cout << "rank: " << rank << " reduce time: " << duration_total << "s\n";
+
 
   if (world.rank() == 0) {
     std::vector<double> num;
