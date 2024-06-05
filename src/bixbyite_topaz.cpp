@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
   const Eigen::Matrix3f m_UB = extras.getUBMatrix();
   const std::vector<bool> skip_dets = extras.getSkipDets();
 
-  std::string event_filename = std::string(BIXBYITE_EVENT_NXS_PREFIX).append("40704_BEFORE_MDNorm.nxs");
+  auto event_filename = std::string(BIXBYITE_EVENT_NXS_PREFIX).append("40704_BEFORE_MDNorm.nxs");
 
   LoadEventWorkspace eventWS(event_filename);
   const std::vector<float> lowValues = eventWS.getLowValues();

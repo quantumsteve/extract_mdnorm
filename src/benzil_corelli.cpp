@@ -202,7 +202,7 @@ int main(int argc, char *argv[]) {
     //REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));*/
     startt = std::chrono::high_resolution_clock::now();
 
-    eventWS.updateEvents(events);
+    eventWS_changes.updateEvents(events);
 #pragma omp parallel for collapse(2)
     for (const Eigen::Matrix3f &op : transforms2) {
       for (auto &val : events) {
