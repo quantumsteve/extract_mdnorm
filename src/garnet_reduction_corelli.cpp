@@ -81,6 +81,7 @@ TEST_CASE("calculateIntersections") {
     auto signal = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
                                       std::get<1>(axes), std::get<2>(axes));
 
+    std::vector<int> idx;
     std::vector<std::array<float, 4>> intersections;
     std::vector<float> xValues;
     std::vector<double> yValues;
@@ -112,7 +113,7 @@ TEST_CASE("calculateIntersections") {
         else // masked detector in flux, but not in input workspace
           continue;
 
-        doctest.calculateIntersections(signal, intersections, thetaValues[i], phiValues[i], op, lowValues[i],
+        doctest.calculateIntersections(signal, idx, intersections, thetaValues[i], phiValues[i], op, lowValues[i],
                                        highValues[i]);
 
         if (intersections.empty())
@@ -122,9 +123,9 @@ TEST_CASE("calculateIntersections") {
         const double solid_angle_factor = solidAngleWS[solidAngDetToIdx.find(detID)->second][0];
         double solid = protonCharge * solid_angle_factor;
 
-        calcDiffractionIntersectionIntegral(intersections, xValues, yValues, integrFlux_x, integrFlux_y, wsIdx);
+        calcDiffractionIntersectionIntegral(idx, intersections, xValues, yValues, integrFlux_x, integrFlux_y, wsIdx);
 
-        doctest.calcSingleDetectorNorm(intersections, solid, yValues, signal);
+        doctest.calcSingleDetectorNorm(idx, intersections, solid, yValues, signal);
       }
     }
     auto stop = std::chrono::high_resolution_clock::now();

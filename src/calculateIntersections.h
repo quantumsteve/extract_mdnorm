@@ -36,9 +36,9 @@ public:
    * @param lowvalue The lowest momentum or energy transfer for the trajectory
    * @param highvalue The highest momentum or energy transfer for the trajectory
    */
-  void calculateIntersections(histogram_type &h, std::vector<std::array<float, 4>> &intersections, const float theta,
-                              const float phi, const Eigen::Matrix3f &transform, const float lowvalue,
-                              const float highvalue);
+  void calculateIntersections(histogram_type &h, std::vector<int> &idx,
+                              std::vector<std::array<float, 4>> &intersections, const float theta, const float phi,
+                              const Eigen::Matrix3f &transform, const float lowvalue, const float highvalue);
   /**
    * Calculate the normalization among intersections on a single detector
    * in 1 specific SpectrumInfo/ExperimentInfo
@@ -49,8 +49,8 @@ public:
    * @param solidBkgd: background proton charge
    * @param bkgdSignalArray: (output) background normalization
    */
-  void calcSingleDetectorNorm(const std::vector<std::array<float, 4>> &intersections, const double &solid,
-                              std::vector<double> &yValues, histogram_type &h);
+  void calcSingleDetectorNorm(const std::vector<int> &idx, const std::vector<std::array<float, 4>> &intersections,
+                              const double &solid, std::vector<double> &yValues, histogram_type &h);
 
   void setTransformation(Eigen::Matrix3f &t) { m_transformation = t; }
 

@@ -108,12 +108,12 @@ TEST_CASE("calculateIntersections") {
     dataset.read(detIDs);
 
     int detector = 0;
-    int idx = 0;
+    int index = 0;
     for (auto &value : dc_data) {
       for (int i = 0; i < value; ++i) {
-        fluxDetToIdx.emplace(detIDs[detector++], idx);
+        fluxDetToIdx.emplace(detIDs[detector++], index);
       }
-      ++idx;
+      ++index;
     }
 
     group3 = group2.getGroup("physical_detectors");
@@ -189,6 +189,7 @@ TEST_CASE("calculateIntersections") {
       transforms.push_back(transform.inverse());
     }
 
+    std::vector<int> idx;
     std::vector<std::array<float, 4>> intersections, intersections_new;
     for (const Eigen::Matrix3f &op : transforms) {
       for (size_t i = 0; i < ndets; ++i) {
@@ -197,17 +198,17 @@ TEST_CASE("calculateIntersections") {
 
         int32_t detID = detIDs[i];
         // get the flux spectrum number: this is for diffraction only!
-        if (auto index = fluxDetToIdx.find(detID); index == fluxDetToIdx.end())
+        if (auto idx2 = fluxDetToIdx.find(detID); idx2 == fluxDetToIdx.end())
           continue;
 
         doctest.calculateIntersections(intersections, thetaValues[i], phiValues[i], op, lowValues[i], highValues[i]);
 
-        doctest.calculateIntersections(signal, intersections_new, thetaValues[i], phiValues[i], op, lowValues[i],
+        doctest.calculateIntersections(signal, idx, intersections_new, thetaValues[i], phiValues[i], op, lowValues[i],
                                        highValues[i]);
         REQUIRE(intersections.size() == intersections_new.size());
         for (size_t j = 0; j < intersections.size(); ++j) {
           const auto &old_v = intersections[j];
-          const auto &new_v = intersections_new[j];
+          const auto &new_v = intersections_new[idx[j]];
           for (int k = 0; k < 4; ++k)
             REQUIRE_THAT(new_v[k], Catch::Matchers::WithinAbs(old_v[k], 0.0001));
         }

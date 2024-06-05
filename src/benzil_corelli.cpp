@@ -40,9 +40,9 @@ int main(int argc, char *argv[]) {
 
   using namespace boost::histogram;
   using reg = axis::regular<float>;
-  // std::tuple<reg, reg, reg> axes{reg(603, -7.5375, 7.5375, "x"), reg(603, -13.16524, 13.16524, "y"),
-  //                               reg(1, -0.5, 0.5, "z")};
-  std::tuple<reg, reg, reg> axes{reg(201, -10., 10., "x"), reg(201, -10., 10., "y"), reg(201, -10., 10., "z")};
+  std::tuple<reg, reg, reg> axes{reg(603, -7.5375, 7.5375, "x"), reg(603, -13.16524, 13.16524, "y"),
+                                 reg(1, -0.5, 0.5, "z")};
+  // std::tuple<reg, reg, reg> axes{reg(201, -10., 10., "x"), reg(201, -10., 10., "y"), reg(201, -10., 10., "z")};
 
   std::vector<float> hX, kX, lX;
   {
@@ -108,6 +108,7 @@ int main(int argc, char *argv[]) {
     transforms2.push_back(transform.inverse());
   }
 
+  std::vector<int> idx;
   std::vector<std::array<float, 4>> intersections;
   std::vector<float> xValues;
   std::vector<double> yValues;
@@ -148,7 +149,7 @@ int main(int argc, char *argv[]) {
     }
 
     auto startt = std::chrono::high_resolution_clock::now();
-#pragma omp parallel for collapse(2) private(intersections, xValues, yValues)
+#pragma omp parallel for collapse(2) private(idx, intersections, xValues, yValues)
     for (const Eigen::Matrix3f &op : transforms) {
       for (size_t i = 0; i < ndets; ++i) {
         if (skip_dets[i])
@@ -162,7 +163,7 @@ int main(int argc, char *argv[]) {
         else // masked detector in flux, but not in input workspace
           continue;
 
-        doctest.calculateIntersections(signal, intersections, thetaValues[i], phiValues[i], op, lowValues[i],
+        doctest.calculateIntersections(signal, idx, intersections, thetaValues[i], phiValues[i], op, lowValues[i],
                                        highValues[i]);
 
         if (intersections.empty())
@@ -172,9 +173,9 @@ int main(int argc, char *argv[]) {
         const double solid_angle_factor = solidAngleWS[solidAngDetToIdx.find(detID)->second][0];
         double solid = protonCharge * solid_angle_factor;
 
-        calcDiffractionIntersectionIntegral(intersections, xValues, yValues, integrFlux_x, integrFlux_y, wsIdx);
+        calcDiffractionIntersectionIntegral(idx, intersections, xValues, yValues, integrFlux_x, integrFlux_y, wsIdx);
 
-        doctest.calcSingleDetectorNorm(intersections, solid, yValues, signal);
+        doctest.calcSingleDetectorNorm(idx, intersections, solid, yValues, signal);
       }
     }
     auto stopt = std::chrono::high_resolution_clock::now();
