@@ -192,7 +192,7 @@ TEST_CASE("calculateIntersections") {
     std::vector<std::array<float, 4>> intersections;
     std::vector<int> idx;
     std::vector<float> momentum_new;
-    std::vector<std::array<float, 3>> intersections_new;
+    std::vector<Eigen::Vector3f> intersections_new;
     for (const Eigen::Matrix3f &op : transforms) {
       for (size_t i = 0; i < ndets; ++i) {
         if (skip_dets[i])

@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
 
   std::vector<int> idx;
   std::vector<float> momentum;
-  std::vector<std::array<float, 3>> intersections;
+  std::vector<Eigen::Vector3f> intersections;
   std::vector<float> xValues;
   std::vector<double> yValues;
   std::vector<Eigen::Matrix3f> transforms;

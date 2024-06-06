@@ -37,7 +37,7 @@ public:
    * @param highvalue The highest momentum or energy transfer for the trajectory
    */
   void calculateIntersections(histogram_type &h, std::vector<int> &idx, std::vector<float> &momentum,
-                              std::vector<std::array<float, 3>> &intersections, const float theta, const float phi,
+                              std::vector<Eigen::Vector3f> &intersections, const float theta, const float phi,
                               const Eigen::Matrix3f &transform, const float lowvalue, const float highvalue);
   /**
    * Calculate the normalization among intersections on a single detector
@@ -50,7 +50,7 @@ public:
    * @param bkgdSignalArray: (output) background normalization
    */
   void calcSingleDetectorNorm(const std::vector<int> &idx, const std::vector<float> &xValues,
-                              const std::vector<std::array<float, 3>> &intersections, double solid,
+                              const std::vector<Eigen::Vector3f> &intersections, double solid,
                               std::vector<double> &yValues, histogram_type &h);
 
   void setTransformation(Eigen::Matrix3f &t) { m_transformation = t; }
