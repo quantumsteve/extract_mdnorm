@@ -82,7 +82,8 @@ TEST_CASE("calculateIntersections") {
                                       std::get<1>(axes), std::get<2>(axes));
 
     std::vector<int> idx;
-    std::vector<std::array<float, 4>> intersections;
+    std::vector<float> momentum;
+    std::vector<std::array<float, 3>> intersections;
     std::vector<float> xValues;
     std::vector<double> yValues;
 
@@ -99,7 +100,7 @@ TEST_CASE("calculateIntersections") {
     }
 
     auto start = std::chrono::high_resolution_clock::now();
-#pragma omp parallel for collapse(2) private(intersections, xValues, yValues)
+#pragma omp parallel for collapse(2) private(idx, momentum, intersections, xValues, yValues)
     for (const Eigen::Matrix3f &op : transforms) {
       for (size_t i = 0; i < ndets; ++i) {
         if (skip_dets[i])
@@ -113,8 +114,8 @@ TEST_CASE("calculateIntersections") {
         else // masked detector in flux, but not in input workspace
           continue;
 
-        doctest.calculateIntersections(signal, idx, intersections, thetaValues[i], phiValues[i], op, lowValues[i],
-                                       highValues[i]);
+        doctest.calculateIntersections(signal, idx, momentum, intersections, thetaValues[i], phiValues[i], op,
+                                       lowValues[i], highValues[i]);
 
         if (intersections.empty())
           continue;
@@ -123,9 +124,10 @@ TEST_CASE("calculateIntersections") {
         const double solid_angle_factor = solidAngleWS[solidAngDetToIdx.find(detID)->second][0];
         double solid = protonCharge * solid_angle_factor;
 
-        calcDiffractionIntersectionIntegral(idx, intersections, xValues, yValues, integrFlux_x, integrFlux_y, wsIdx);
+        calcDiffractionIntersectionIntegral(idx, momentum, intersections, xValues, yValues, integrFlux_x, integrFlux_y,
+                                            wsIdx);
 
-        doctest.calcSingleDetectorNorm(idx, intersections, solid, yValues, signal);
+        doctest.calcSingleDetectorNorm(idx, momentum, intersections, solid, yValues, signal);
       }
     }
     auto stop = std::chrono::high_resolution_clock::now();

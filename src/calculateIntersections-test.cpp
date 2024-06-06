@@ -189,8 +189,10 @@ TEST_CASE("calculateIntersections") {
       transforms.push_back(transform.inverse());
     }
 
+    std::vector<std::array<float, 4>> intersections;
     std::vector<int> idx;
-    std::vector<std::array<float, 4>> intersections, intersections_new;
+    std::vector<float> momentum_new;
+    std::vector<std::array<float, 3>> intersections_new;
     for (const Eigen::Matrix3f &op : transforms) {
       for (size_t i = 0; i < ndets; ++i) {
         if (skip_dets[i])
@@ -203,13 +205,14 @@ TEST_CASE("calculateIntersections") {
 
         doctest.calculateIntersections(intersections, thetaValues[i], phiValues[i], op, lowValues[i], highValues[i]);
 
-        doctest.calculateIntersections(signal, idx, intersections_new, thetaValues[i], phiValues[i], op, lowValues[i],
-                                       highValues[i]);
+        doctest.calculateIntersections(signal, idx, momentum_new, intersections_new, thetaValues[i], phiValues[i], op,
+                                       lowValues[i], highValues[i]);
         REQUIRE(intersections.size() == intersections_new.size());
         for (size_t j = 0; j < intersections.size(); ++j) {
           const auto &old_v = intersections[j];
+          REQUIRE_THAT(momentum_new[idx[j]], Catch::Matchers::WithinAbs(old_v[3], 0.0001));
           const auto &new_v = intersections_new[idx[j]];
-          for (int k = 0; k < 4; ++k)
+          for (int k = 0; k < 3; ++k)
             REQUIRE_THAT(new_v[k], Catch::Matchers::WithinAbs(old_v[k], 0.0001));
         }
       }
