@@ -49,7 +49,7 @@ public:
    * @param solidBkgd: background proton charge
    * @param bkgdSignalArray: (output) background normalization
    */
-  void calcSingleDetectorNorm(const std::vector<int> &idx, const std::vector<float> &momentum,
+  void calcSingleDetectorNorm(const std::vector<int> &idx, const std::vector<float> &xValues,
                               const std::vector<std::array<float, 3>> &intersections, double solid,
                               std::vector<double> &yValues, histogram_type &h);
 

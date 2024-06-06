@@ -125,7 +125,7 @@ TEST_CASE("calculateIntersections") {
         calcDiffractionIntersectionIntegral(idx, momentum, intersections, xValues, yValues, integrFlux_x, integrFlux_y,
                                             wsIdx);
 
-        doctest.calcSingleDetectorNorm(idx, momentum, intersections, solid, yValues, signal);
+        doctest.calcSingleDetectorNorm(idx, xValues, intersections, solid, yValues, signal);
       }
     }
 

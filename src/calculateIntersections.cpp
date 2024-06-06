@@ -320,23 +320,21 @@ void MDNorm::calculateIntersections(histogram_type &h, std::vector<int> &idx, st
    * @param solidBkgd: background proton charge
    * @param bkgdSignalArray: (output) background normalization
    */
-void MDNorm::calcSingleDetectorNorm(const std::vector<int> &idx, const std::vector<float> &momentum,
+void MDNorm::calcSingleDetectorNorm(const std::vector<int> &idx, const std::vector<float> &xValues,
                                     const std::vector<std::array<float, 3>> &intersections, const double solid,
                                     std::vector<double> &yValues, histogram_type &h) {
-
-  auto idxBegin = idx.begin();
-  for (auto it = idxBegin + 1; it != idx.end(); ++it) {
+  for (size_t k = 1; k < idx.size(); ++k) {
     // The full vector isn't used so compute only what is necessary
     // If the difference between 2 adjacent intersection is trivial, no
     // intersection normalization is to be calculated
     // diffraction
-    double delta = momentum[*it] - momentum[*(it - 1)];
+    double delta = xValues[k] - xValues[k - 1];
     double eps = 1e-7;
     if (delta < eps)
       continue; // Assume zero contribution if difference is small
 
-    const auto &curIntSec = intersections[*it];
-    const auto &prevIntSec = intersections[*(it - 1)];
+    const auto &curIntSec = intersections[idx[k]];
+    const auto &prevIntSec = intersections[idx[k - 1]];
     // Average between two intersections for final position
     // Find the coordiate of the new position after transformation
     Eigen::Map<const Eigen::Vector3f> pos1(curIntSec.data());
@@ -345,7 +343,7 @@ void MDNorm::calcSingleDetectorNorm(const std::vector<int> &idx, const std::vect
 
     // Diffraction
     // index of the current intersection
-    auto k = static_cast<size_t>(std::distance(idxBegin, it));
+    // auto k = static_cast<size_t>(std::distance(idxBegin, it));
     // signal = integral between two consecutive intersections
     double signal = (yValues[k] - yValues[k - 1]) * solid;
 
