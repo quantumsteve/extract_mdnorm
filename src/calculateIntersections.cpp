@@ -243,7 +243,7 @@ void MDNorm::calculateIntersections(histogram_type &h, std::vector<int> &idx, st
         if ((li >= m_lX[0]) && (li <= m_lX[lNBins - 1])) {
           float momi = fmom * (hi - hStart) + kfmin;
           momentum.push_back(momi);
-          intersections.push_back({hi, ki, li});
+          intersections.emplace_back(hi, ki, li);
         }
       }
     }
@@ -265,7 +265,7 @@ void MDNorm::calculateIntersections(histogram_type &h, std::vector<int> &idx, st
         if ((li >= m_lX[0]) && (li <= m_lX[lNBins - 1])) {
           float momi = fmom * (ki - kStart) + kfmin;
           momentum.push_back(momi);
-          intersections.push_back({hi, ki, li});
+          intersections.emplace_back(hi, ki, li);
         }
       }
     }
@@ -285,7 +285,7 @@ void MDNorm::calculateIntersections(histogram_type &h, std::vector<int> &idx, st
         if ((ki >= m_kX[0]) && (ki <= m_kX[kNBins - 1])) {
           float momi = fmom * (li - lStart) + kfmin;
           momentum.push_back(momi);
-          intersections.push_back({hi, ki, li});
+          intersections.emplace_back(hi, ki, li);
         }
       }
     }
@@ -295,18 +295,17 @@ void MDNorm::calculateIntersections(histogram_type &h, std::vector<int> &idx, st
   if ((hStart >= m_hX[0]) && (hStart <= m_hX[hNBins - 1]) && (kStart >= m_kX[0]) && (kStart <= m_kX[kNBins - 1]) &&
       (lStart >= m_lX[0]) && (lStart <= m_lX[lNBins - 1])) {
     momentum.push_back(kfmin);
-    intersections.push_back({hStart, kStart, lStart});
+    intersections.emplace_back(hStart, kStart, lStart);
   }
   if ((hEnd >= m_hX[0]) && (hEnd <= m_hX[hNBins - 1]) && (kEnd >= m_kX[0]) && (kEnd <= m_kX[kNBins - 1]) &&
       (lEnd >= m_lX[0]) && (lEnd <= m_lX[lNBins - 1])) {
     momentum.push_back(kfmax);
-    intersections.push_back({hEnd, kEnd, lEnd});
+    intersections.emplace_back(hEnd, kEnd, lEnd);
   }
 
   // sort intersections by final momentum
   idx.resize(intersections.size());
   std::iota(idx.begin(), idx.end(), 0);
-  // std::sort(idx.begin(), idx.end(), [&momentum](int i1, int i2) { return momentum[i1] < momentum[i2]; });
   x86simdsort::keyvalue_qsort(momentum.data(), idx.data(), momentum.size());
 }
 
@@ -328,8 +327,8 @@ void MDNorm::calcSingleDetectorNorm(const std::vector<int> &idx, const std::vect
     // If the difference between 2 adjacent intersection is trivial, no
     // intersection normalization is to be calculated
     // diffraction
-    double delta = xValues[k] - xValues[k - 1];
-    double eps = 1e-7;
+    float delta = xValues[k] - xValues[k - 1];
+    const float eps = 1e-7;
     if (delta < eps)
       continue; // Assume zero contribution if difference is small
 
@@ -337,7 +336,7 @@ void MDNorm::calcSingleDetectorNorm(const std::vector<int> &idx, const std::vect
     const auto &pos2 = intersections[idx[k - 1]];
     // Average between two intersections for final position
     // Find the coordiate of the new position after transformation
-    Eigen::Vector3f posNew = m_transformation * 0.5 * (pos1 + pos2);
+    Eigen::Vector3f posNew = m_transformation * 0.5f * (pos1 + pos2);
 
     // Diffraction
     // index of the current intersection

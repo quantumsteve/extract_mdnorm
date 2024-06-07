@@ -76,7 +76,7 @@ set( BIXBYITE_EVENT_NXS_MAX "40725" )
 configure_file( ${source_path} ${destination_path} )
 
 add_executable(calculateIntersections-test src/calculateIntersections.cpp src/calculateIntersections-test.cpp)
-target_link_libraries(calculateIntersections-test HighFive Eigen3::Eigen Boost::boost Catch2::Catch2WithMain  /home/svh/x86-simd-sort/lib/x86_64-linux-gnu/libx86simdsortcpp.so)
+target_link_libraries(calculateIntersections-test HighFive Eigen3::Eigen Boost::boost Catch2::Catch2WithMain OpenMP::OpenMP_CXX /home/svh/x86-simd-sort/lib/x86_64-linux-gnu/libx86simdsortcpp.so)
 target_include_directories(calculateIntersections-test PRIVATE ${PROJECT_BINARY_DIR}/include /home/svh/x86-simd-sort/include)
 
 add_executable(calcDiffractionIntersectionIntegral-test src/calculateIntersections.cpp
