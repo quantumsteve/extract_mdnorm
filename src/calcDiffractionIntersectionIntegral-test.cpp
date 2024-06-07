@@ -116,12 +116,13 @@ TEST_CASE("calculateIntersections") {
 
         if (intersections.empty())
           continue;
+        std::cout << intersections.size() << std::endl;
 
         // Get solid angle for this contribution
         const double solid_angle_factor = solidAngleWS[solidAngDetToIdx.find(detID)->second][0];
         double solid = protonCharge * solid_angle_factor;
 
-        calcDiffractionIntersectionIntegral(momentum, intersections, yValues, integrFlux_x, integrFlux_y, wsIdx);
+        calcDiffractionIntersectionIntegral(momentum, yValues, integrFlux_x, integrFlux_y, wsIdx);
 
         doctest.calcSingleDetectorNorm(idx, momentum, intersections, solid, yValues, signal);
       }
