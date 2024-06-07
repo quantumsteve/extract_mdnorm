@@ -1,5 +1,6 @@
 #pragma once
 
+#include "x86simdsort.h"
 #include <Eigen/Core>
 #include <boost/histogram.hpp>
 

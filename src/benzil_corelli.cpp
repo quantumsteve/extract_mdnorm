@@ -177,7 +177,7 @@ int main(int argc, char *argv[]) {
         calcDiffractionIntersectionIntegral(idx, momentum, intersections, xValues, yValues, integrFlux_x, integrFlux_y,
                                             wsIdx);
 
-        doctest.calcSingleDetectorNorm(idx, xValues, intersections, solid, yValues, signal);
+        doctest.calcSingleDetectorNorm(idx, momentum, intersections, solid, yValues, signal);
       }
     }
     auto stopt = std::chrono::high_resolution_clock::now();

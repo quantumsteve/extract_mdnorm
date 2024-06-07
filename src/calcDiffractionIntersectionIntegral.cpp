@@ -82,14 +82,14 @@ void calcDiffractionIntersectionIntegral(const std::vector<int> &idx, const std:
                                          const std::vector<std::vector<double>> &integrFlux_y, const size_t wsIdx) {
   // -- calculate integrals for the intersection --
   // copy momenta to xValues
-  xValues.resize(intersections.size());
+  // xValues.resize(intersections.size());
   yValues.resize(intersections.size());
-  auto x = xValues.begin();
-  for (auto it = idx.begin(); it != idx.end(); ++it, ++x) {
-    *x = momentum[*it];
-  }
+  // auto x = xValues.begin();
+  // for (auto it = idx.begin(); it != idx.end(); ++it, ++x) {
+  //  *x = momentum[*it];
+  //}
   // calculate integrals at momenta from xValues by interpolating between
   // points in spectrum sp
   // of workspace integrFlux. The result is stored in yValues
-  calcIntegralsForIntersections(xValues, integrFlux_x, integrFlux_y, wsIdx, yValues);
+  calcIntegralsForIntersections(momentum, integrFlux_x, integrFlux_y, wsIdx, yValues);
 }
