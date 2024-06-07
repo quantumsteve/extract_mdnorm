@@ -76,14 +76,13 @@ static void calcIntegralsForIntersections(const std::vector<float> &xValues,
  * @param wsIdx: workspace index
  */
 void calcDiffractionIntersectionIntegral(const std::vector<float> &momentum,
-                                         const std::vector<Eigen::Vector3f> &intersections,
                                          std::vector<double> &yValues,
                                          const boost::histogram::axis::regular<float> &integrFlux_x,
                                          const std::vector<std::vector<double>> &integrFlux_y, const size_t wsIdx) {
   // -- calculate integrals for the intersection --
   // copy momenta to xValues
   // xValues.resize(intersections.size());
-  yValues.resize(intersections.size());
+  yValues.resize(momentum.size());
   // auto x = xValues.begin();
   // for (auto it = idx.begin(); it != idx.end(); ++it, ++x) {
   //  *x = momentum[*it];
