@@ -26,6 +26,8 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 
 include( CMake/catch.cmake )
 
+find_package(MPI REQUIRED)
+find_package(Boost REQUIRED COMPONENTS MPI)
 find_package(Eigen3 REQUIRED)
 find_package(HDF5 REQUIRED)
 find_package(OpenMP REQUIRED)
@@ -74,7 +76,7 @@ set( BIXBYITE_EVENT_NXS_MAX "40725" )
 configure_file( ${source_path} ${destination_path} )
 
 add_executable(calculateIntersections-test src/calculateIntersections.cpp src/calculateIntersections-test.cpp)
-target_link_libraries(calculateIntersections-test HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
+target_link_libraries(calculateIntersections-test HighFive Eigen3::Eigen Boost::boost Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
 target_include_directories(calculateIntersections-test PRIVATE ${PROJECT_BINARY_DIR}/include)
 
 add_executable(calcDiffractionIntersectionIntegral-test src/calculateIntersections.cpp
@@ -85,7 +87,7 @@ add_executable(calcDiffractionIntersectionIntegral-test src/calculateIntersectio
                                                         src/LoadEventWorkspace.cpp
                                                         src/LoadExtrasWorkspace.cpp
                                                         )
-target_link_libraries(calcDiffractionIntersectionIntegral-test HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
+target_link_libraries(calcDiffractionIntersectionIntegral-test HighFive Eigen3::Eigen Boost::boost Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
 target_include_directories(calcDiffractionIntersectionIntegral-test PRIVATE ${PROJECT_BINARY_DIR}/include)
 
 add_executable(garnet_reduction_corelli src/calculateIntersections.cpp
@@ -96,7 +98,7 @@ add_executable(garnet_reduction_corelli src/calculateIntersections.cpp
                                         src/LoadEventWorkspace.cpp
                                         src/LoadExtrasWorkspace.cpp
                                         )
-target_link_libraries(garnet_reduction_corelli HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
+target_link_libraries(garnet_reduction_corelli HighFive Eigen3::Eigen Catch2::Catch2WithMain Boost::boost OpenMP::OpenMP_CXX)
 target_include_directories(garnet_reduction_corelli PRIVATE ${PROJECT_BINARY_DIR}/include)
 
 add_executable(benzil_corelli src/calculateIntersections.cpp
@@ -107,8 +109,8 @@ add_executable(benzil_corelli src/calculateIntersections.cpp
                                         src/LoadEventWorkspace.cpp
                                         src/LoadExtrasWorkspace.cpp
                                         )
-target_link_libraries(benzil_corelli HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
-target_include_directories(benzil_corelli PRIVATE ${PROJECT_BINARY_DIR}/include)
+target_link_libraries(benzil_corelli HighFive Eigen3::Eigen Catch2::Catch2WithMain Boost::boost Boost::mpi ${MPI_CXX_LIBRARIES} OpenMP::OpenMP_CXX)
+target_include_directories(benzil_corelli PRIVATE ${PROJECT_BINARY_DIR}/include ${MPI_CXX_INCLUDE_PATH})
 
 add_executable(bixbyite_topaz src/calculateIntersections.cpp
                                         src/calcDiffractionIntersectionIntegral.cpp
@@ -118,14 +120,13 @@ add_executable(bixbyite_topaz src/calculateIntersections.cpp
                                         src/LoadEventWorkspace.cpp
                                         src/LoadExtrasWorkspace.cpp
                                         )
-target_link_libraries(bixbyite_topaz HighFive Eigen3::Eigen Catch2::Catch2WithMain OpenMP::OpenMP_CXX)
-target_include_directories(bixbyite_topaz PRIVATE ${PROJECT_BINARY_DIR}/include)
+
+target_link_libraries(bixbyite_topaz HighFive Eigen3::Eigen Catch2::Catch2WithMain Boost::boost Boost::mpi ${MPI_CXX_LIBRARIES} OpenMP::OpenMP_CXX)
+target_include_directories(bixbyite_topaz PRIVATE ${PROJECT_BINARY_DIR}/include ${MPI_CXX_INCLUDE_PATH} )
 
 include( CTest )
 
 enable_testing()
 
-add_test( NAME calculateIntersections COMMAND calculateIntersections-test )
+add_test( NAME calculateIntersections COMMAND calculateIntersections-test)
 add_test( NAME calcDiffractionIntersectionIntegral COMMAND calcDiffractionIntersectionIntegral-test )
-add_test( NAME wsIdx COMMAND wsIdx-test )
-

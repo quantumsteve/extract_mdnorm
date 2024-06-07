@@ -60,7 +60,7 @@ static void calcIntegralsForIntersections(const std::vector<float> &xValues,
     float x0 = integrFlux_x.bin(j).lower();
     double y0 = yData[j];
     double y1 = yData[j + 1];
-    yValues[i] = std::lerp(y0, y1, (xi - x0) * inv_step);
+    yValues[i] = std::lerp(y0, y1, static_cast<double>((xi - x0) * inv_step));
   }
 
   std::fill(yValues.begin() + iMax, yValues.end(), yMax);
@@ -75,7 +75,8 @@ static void calcIntegralsForIntersections(const std::vector<float> &xValues,
  * @param integrFlux: integral flux workspace
  * @param wsIdx: workspace index
  */
-void calcDiffractionIntersectionIntegral(std::vector<std::array<float, 4>> &intersections, std::vector<float> &xValues,
+void calcDiffractionIntersectionIntegral(const std::vector<int> &idx, const std::vector<float> &momentum,
+                                         const std::vector<Eigen::Vector3f> &intersections, std::vector<float> &xValues,
                                          std::vector<double> &yValues,
                                          const boost::histogram::axis::regular<float> &integrFlux_x,
                                          const std::vector<std::vector<double>> &integrFlux_y, const size_t wsIdx) {
@@ -84,8 +85,8 @@ void calcDiffractionIntersectionIntegral(std::vector<std::array<float, 4>> &inte
   xValues.resize(intersections.size());
   yValues.resize(intersections.size());
   auto x = xValues.begin();
-  for (auto it = intersections.begin(); it != intersections.end(); ++it, ++x) {
-    *x = (*it)[3];
+  for (auto it = idx.begin(); it != idx.end(); ++it, ++x) {
+    *x = momentum[*it];
   }
   // calculate integrals at momenta from xValues by interpolating between
   // points in spectrum sp

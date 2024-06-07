@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Eigen/Dense>
 #include <boost/histogram.hpp>
 
 #include <array>
@@ -16,7 +17,8 @@
  * @param wsIdx: workspace index
  */
 
-void calcDiffractionIntersectionIntegral(std::vector<std::array<float, 4>> &intersections, std::vector<float> &xValues,
+void calcDiffractionIntersectionIntegral(const std::vector<int> &idx, const std::vector<float> &momentum,
+                                         const std::vector<Eigen::Vector3f> &intersections, std::vector<float> &xValues,
                                          std::vector<double> &yValues,
                                          const boost::histogram::axis::regular<float> &integrFlux_x,
                                          const std::vector<std::vector<double>> &integrFlux_y, const size_t wsIndx);

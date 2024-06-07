@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <numeric>
 
 // function to  compare two intersections (h,k,l,Momentum) by Momentum
 static bool compareMomentum(const std::array<float, 4> &v1, const std::array<float, 4> &v2) {
@@ -141,9 +142,9 @@ void MDNorm::calculateIntersections(std::vector<std::array<float, 4>> &intersect
  * @param lowvalue The lowest momentum or energy transfer for the trajectory
  * @param highvalue The highest momentum or energy transfer for the trajectory
  */
-void MDNorm::calculateIntersections(histogram_type &h, std::vector<std::array<float, 4>> &intersections,
-                                    const float theta, const float phi, const Eigen::Matrix3f &transform,
-                                    const float lowvalue, const float highvalue) {
+void MDNorm::calculateIntersections(histogram_type &h, std::vector<int> &idx, std::vector<float> &momentum,
+                                    std::vector<Eigen::Vector3f> &intersections, const float theta, const float phi,
+                                    const Eigen::Matrix3f &transform, const float lowvalue, const float highvalue) {
   Eigen::Vector3f qout(std::sin(theta) * std::cos(phi), std::sin(theta) * std::sin(phi), std::cos(theta));
   Eigen::Vector3f qin(0.f, 0.f, 1.f);
 
@@ -223,6 +224,8 @@ void MDNorm::calculateIntersections(histogram_type &h, std::vector<std::array<fl
 
   intersections.clear();
   intersections.reserve(hNBins + kNBins + lNBins + 2);
+  momentum.clear();
+  momentum.reserve(hNBins + kNBins + lNBins + 2);
 
   // calculate intersections with planes perpendicular to h
   {
@@ -239,7 +242,8 @@ void MDNorm::calculateIntersections(histogram_type &h, std::vector<std::array<fl
         float li = fl * (hi - hStart) + lStart;
         if ((li >= m_lX[0]) && (li <= m_lX[lNBins - 1])) {
           float momi = fmom * (hi - hStart) + kfmin;
-          intersections.push_back({{hi, ki, li, momi}});
+          momentum.push_back(momi);
+          intersections.push_back({hi, ki, li});
         }
       }
     }
@@ -260,7 +264,8 @@ void MDNorm::calculateIntersections(histogram_type &h, std::vector<std::array<fl
         float li = fl * (ki - kStart) + lStart;
         if ((li >= m_lX[0]) && (li <= m_lX[lNBins - 1])) {
           float momi = fmom * (ki - kStart) + kfmin;
-          intersections.push_back({{hi, ki, li, momi}});
+          momentum.push_back(momi);
+          intersections.push_back({hi, ki, li});
         }
       }
     }
@@ -279,7 +284,8 @@ void MDNorm::calculateIntersections(histogram_type &h, std::vector<std::array<fl
         float ki = fk * (li - lStart) + kStart;
         if ((ki >= m_kX[0]) && (ki <= m_kX[kNBins - 1])) {
           float momi = fmom * (li - lStart) + kfmin;
-          intersections.push_back({{hi, ki, li, momi}});
+          momentum.push_back(momi);
+          intersections.push_back({hi, ki, li});
         }
       }
     }
@@ -288,15 +294,19 @@ void MDNorm::calculateIntersections(histogram_type &h, std::vector<std::array<fl
   // endpoints
   if ((hStart >= m_hX[0]) && (hStart <= m_hX[hNBins - 1]) && (kStart >= m_kX[0]) && (kStart <= m_kX[kNBins - 1]) &&
       (lStart >= m_lX[0]) && (lStart <= m_lX[lNBins - 1])) {
-    intersections.push_back({{hStart, kStart, lStart, kfmin}});
+    momentum.push_back(kfmin);
+    intersections.push_back({hStart, kStart, lStart});
   }
   if ((hEnd >= m_hX[0]) && (hEnd <= m_hX[hNBins - 1]) && (kEnd >= m_kX[0]) && (kEnd <= m_kX[kNBins - 1]) &&
       (lEnd >= m_lX[0]) && (lEnd <= m_lX[lNBins - 1])) {
-    intersections.push_back({{hEnd, kEnd, lEnd, kfmax}});
+    momentum.push_back(kfmax);
+    intersections.push_back({hEnd, kEnd, lEnd});
   }
 
   // sort intersections by final momentum
-  std::sort(intersections.begin(), intersections.end(), compareMomentum);
+  idx.resize(intersections.size());
+  std::iota(idx.begin(), idx.end(), 0);
+  std::sort(idx.begin(), idx.end(), [&momentum](int i1, int i2) { return momentum[i1] < momentum[i2]; });
 }
 
 /**
@@ -309,39 +319,34 @@ void MDNorm::calculateIntersections(histogram_type &h, std::vector<std::array<fl
    * @param solidBkgd: background proton charge
    * @param bkgdSignalArray: (output) background normalization
    */
-  void MDNorm::calcSingleDetectorNorm(const std::vector<std::array<float, 4>> &intersections, const double &solid,
-                              std::vector<double> &yValues, histogram_type &h) {
+void MDNorm::calcSingleDetectorNorm(const std::vector<int> &idx, const std::vector<float> &xValues,
+                                    const std::vector<Eigen::Vector3f> &intersections, const double solid,
+                                    std::vector<double> &yValues, histogram_type &h) {
+  for (size_t k = 1; k < idx.size(); ++k) {
+    // The full vector isn't used so compute only what is necessary
+    // If the difference between 2 adjacent intersection is trivial, no
+    // intersection normalization is to be calculated
+    // diffraction
+    double delta = xValues[k] - xValues[k - 1];
+    double eps = 1e-7;
+    if (delta < eps)
+      continue; // Assume zero contribution if difference is small
 
-    auto intersectionsBegin = intersections.begin();
-    for (auto it = intersectionsBegin + 1; it != intersections.end(); ++it) {
+    const auto &pos1 = intersections[idx[k]];
+    const auto &pos2 = intersections[idx[k - 1]];
+    // Average between two intersections for final position
+    // Find the coordiate of the new position after transformation
+    Eigen::Vector3f posNew = m_transformation * 0.5 * (pos1 + pos2);
 
-      const auto &curIntSec = *it;
-      const auto &prevIntSec = *(it - 1);
+    // Diffraction
+    // index of the current intersection
+    // auto k = static_cast<size_t>(std::distance(idxBegin, it));
+    // signal = integral between two consecutive intersections
+    double signal = (yValues[k] - yValues[k - 1]) * solid;
 
-      // The full vector isn't used so compute only what is necessary
-      // If the difference between 2 adjacent intersection is trivial, no
-      // intersection normalization is to be calculated
-      // diffraction
-      double delta = curIntSec[3] - prevIntSec[3];
-      double eps = 1e-7;
-      if (delta < eps)
-        continue; // Assume zero contribution if difference is small
-
-      // Average between two intersections for final position
-      // Find the coordiate of the new position after transformation
-      Eigen::Map<const Eigen::Vector3f> pos1(curIntSec.data());
-      Eigen::Map<const Eigen::Vector3f> pos2(prevIntSec.data());
-      Eigen::Vector3f posNew = m_transformation * 0.5 * (pos1 + pos2);
-
-      // Diffraction
-      // index of the current intersection
-      auto k = static_cast<size_t>(std::distance(intersectionsBegin, it));
-      // signal = integral between two consecutive intersections
-      double signal = (yValues[k] - yValues[k - 1]) * solid;
-
-      using boost::histogram::weight;
-      // Set to output
-      h(posNew[0], posNew[1], posNew[2], weight(signal));
-    }
-    return;
+    using boost::histogram::weight;
+    // Set to output
+    h(posNew[0], posNew[1], posNew[2], weight(signal));
   }
+  return;
+}
