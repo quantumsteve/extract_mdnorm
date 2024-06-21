@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
   using namespace boost::histogram;
   using reg = axis::regular<float>;
-  std::tuple<reg, reg, reg> axes{reg(601, -16.0, 16.0, "x"), reg(601, -16.0, 16.0, "y"), reg(601, -16.0, 16.0, "z")};
+  std::tuple<reg, reg, reg> axes{reg(601, -16.0, 16.0, "x"), reg(601, -16.0, 16.0, "y"), reg(1, -0.1, 0.1, "z")};
 
   std::vector<float> hX, kX, lX;
   {
@@ -206,16 +206,32 @@ int main(int argc, char *argv[]) {
       }
     }
     //REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));*/
-
     eventWS_changes.updateEvents(events);
-
     startt = std::chrono::high_resolution_clock::now();
+    typedef Eigen::Matrix<float, 16, 3> SIMDVector3f;
+#pragma omp parallel for
+    for (size_t i = 0; i < events.size() - 16; i += 16) {
+      SIMDVector3f vi, vf;
+      for (size_t j = 0; j < 16; ++j) {
+        const auto &val = events[i + j];
+        vi(j, 0) = val[5];
+        vi(j, 1) = val[6];
+        vi(j, 2) = val[7];
+      }
+      for (const Eigen::Matrix3f &op : transforms2) {
+        vf.transpose().noalias() = op * vi.transpose();
+        for (size_t j = 0; j < 16; ++j) {
+          h(vf(j, 0), vf(j, 1), vf(j, 2), weight(events[i + j][0]));
+        }
+      }
+    }
 #pragma omp parallel for collapse(2)
-    for (const Eigen::Matrix3f &op : transforms2) {
-      for (auto &val : events) {
-        Eigen::Vector3f v(val[5], val[6], val[7]);
-        v = op * v;
-        h(v[0], v[1], v[2], weight(val[0]));
+    for (size_t i = events.size() - events.size() % 16; i < events.size(); ++i) {
+      for (const Eigen::Matrix3f &op : transforms2) {
+        const auto &val = events[i];
+        Eigen::Vector3f vi(val[5], val[6], val[7]),vf;
+        vf.noalias() = op * vi;
+        h(vf[0], vf[1], vf[2], weight(val[0]));
       }
     }
     stopt = std::chrono::high_resolution_clock::now();
