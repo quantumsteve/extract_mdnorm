@@ -78,7 +78,29 @@ std::vector<int> LoadEventWorkspace::getDetIDs() const {
   return detIDs;
 }
 
+void LoadEventWorkspace::updateEvents(std::vector<std::array<float, 8>> &events) const {
+  // const char *EventHeaders[] = {"signal, errorSquared, center (each dim.)",
+  //                              "signal, errorSquared, expInfoIndex, goniometerIndex, detectorId, center (each "
+  //                              "dim.)"};
+  // https://github.com/mantidproject/mantid/blob/c3ea43e4605f6898b84bd95c1196ccd8035364b1/Framework/DataObjects/src/BoxControllerNeXusIO.cpp#L27
+  HighFive::Group group = m_file.getGroup("MDEventWorkspace");
+  HighFive::Group group2 = group.getGroup("event_data");
+  auto dataset = group2.getDataSet("event_data");
+  dataset.read(events);
+}
+
 void LoadEventWorkspace::updateEvents(std::vector<std::array<double, 8>> &events) const {
+  // const char *EventHeaders[] = {"signal, errorSquared, center (each dim.)",
+  //                              "signal, errorSquared, expInfoIndex, goniometerIndex, detectorId, center (each "
+  //                              "dim.)"};
+  // https://github.com/mantidproject/mantid/blob/c3ea43e4605f6898b84bd95c1196ccd8035364b1/Framework/DataObjects/src/BoxControllerNeXusIO.cpp#L27
+  HighFive::Group group = m_file.getGroup("MDEventWorkspace");
+  HighFive::Group group2 = group.getGroup("event_data");
+  auto dataset = group2.getDataSet("event_data");
+  dataset.read(events);
+}
+
+void LoadEventWorkspace::updateEvents(Eigen::Matrix<float, Eigen::Dynamic, 8> &events) const {
   // const char *EventHeaders[] = {"signal, errorSquared, center (each dim.)",
   //                              "signal, errorSquared, expInfoIndex, goniometerIndex, detectorId, center (each "
   //                              "dim.)"};

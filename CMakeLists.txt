@@ -44,6 +44,14 @@ FetchContent_Declare(HighFive
 )
 FetchContent_MakeAvailable(HighFive)
 
+#set(EIGEN3_GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git)
+#set(EIGEN3_GIT_TAG 3.4.0)
+#FetchContent_Declare(Eigen3
+#  GIT_REPOSITORY ${EIGEN3_GIT_REPOSITORY}
+#  GIT_TAG ${EIGEN3_GIT_TAG}
+#)
+#FetchContent_MakeAvailable(Eigen3)
+
 # header containing all the filepaths as preprocessor defines
 set( source_name "src/validation_data_filepath.h.in" )
 set( source_path "${CMAKE_SOURCE_DIR}/${source_name}" )
