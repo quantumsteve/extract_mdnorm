@@ -206,7 +206,12 @@ int main(int argc, char *argv[]) {
       }
     }
     //REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));*/
+    startt = std::chrono::high_resolution_clock::now();
     eventWS_changes.updateEvents(events);
+    stopt = std::chrono::high_resolution_clock::now();
+    duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
+    std::cout << "rank: " << rank << " updateEvents time: " << duration_total << "s\n";
+
     startt = std::chrono::high_resolution_clock::now();
     typedef Eigen::Matrix<float, 16, 3> SIMDVector3f;
 #pragma omp parallel for
