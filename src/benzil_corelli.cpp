@@ -40,9 +40,9 @@ int main(int argc, char *argv[]) {
 
   using namespace boost::histogram;
   using reg = axis::regular<float>;
-  // std::tuple<reg, reg, reg> axes{reg(603, -7.5375, 7.5375, "x"), reg(603, -13.16524, 13.16524, "y"),
-  //                               reg(1, -0.5, 0.5, "z")};
-  std::tuple<reg, reg, reg> axes{reg(201, -10., 10., "x"), reg(201, -10., 10., "y"), reg(201, -10., 10., "z")};
+  std::tuple<reg, reg, reg> axes{reg(603, -7.5375, 7.5375, "x"), reg(603, -13.16524, 13.16524, "y"),
+                                 reg(1, -0.5, 0.5, "z")};
+  //std::tuple<reg, reg, reg> axes{reg(201, -10., 10., "x"), reg(201, -10., 10., "y"), reg(201, -10., 10., "z")};
 
   std::vector<float> hX, kX, lX;
   {
@@ -135,12 +135,12 @@ int main(int argc, char *argv[]) {
   for (int file_num = BENZIL_EVENT_NXS_MIN + start; file_num <= BENZIL_EVENT_NXS_MIN + stop; ++file_num) {
     auto rot_filename_changes =
         std::string(BENZIL_EVENT_NXS_PREFIX).append(std::to_string(file_num)).append("_extra_params.hdf5");
-    LoadExtrasWorkspace extras_changes(rot_filename);
+    LoadExtrasWorkspace extras_changes(rot_filename_changes);
     Eigen::Matrix3f rotMatrix = extras_changes.getRotMatrix();
 
     auto event_filename_changes =
         std::string(BENZIL_EVENT_NXS_PREFIX).append(std::to_string(file_num)).append("_BEFORE_MDNorm.nxs");
-    LoadEventWorkspace eventWS_changes(event_filename);
+    LoadEventWorkspace eventWS_changes(event_filename_changes);
     double protonCharge = eventWS_changes.getProtonCharge();
 
     transforms.clear();
