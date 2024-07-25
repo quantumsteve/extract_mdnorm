@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
   using namespace boost::histogram;
   using reg = axis::regular<float>;
-  std::tuple<reg, reg, reg> axes{reg(601, -16.0, 16.0, "x"), reg(601, -16.0, 16.0, "y"), reg(1, -0.1, 0.1, "z")};
+  std::tuple<reg, reg, reg> axes{reg(603, -16.0, 16.0, "x"), reg(603, -16.0, 16.0, "y"), reg(1, -0.1, 0.1, "z")};
 
   std::vector<float> hX, kX, lX;
   {
