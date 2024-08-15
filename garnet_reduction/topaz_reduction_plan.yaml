@@ -1,0 +1,25 @@
+Instrument: TOPAZ
+IPTS: 12132
+Runs: 40704:40725
+UBFile: /SNS/TOPAZ/IPTS-12132/shared/bixbyite/90K/bixbyite_90K_Cubic_I.mat
+VanadiumFile: /SNS/TOPAZ/IPTS-12132/shared/calibration/solidAngle.nxs
+#BackgroundFile: /SNS/TOPAZ/shared/Background/2022C_1202_AG/background_1p8-18.nxs
+FluxFile: /SNS/TOPAZ/IPTS-12132/shared/calibration/spectra.nxs
+#MaskFile: /SNS/TOPAZ/shared/Vanadium/2022C_1202_AG/mask.xml
+#DetectorCalibration: /SNS/TOPAZ/shared/calibration/2022C/TOPAZ_2022C_YAG.DetCal
+Integration:
+  Cell: Monoclinic
+  Centering: C
+  ModVec1: [0, 0, 0]
+  ModVec2: [0, 0, 0]
+  ModVec3: [0, 0, 0]
+  MaxOrder: 0
+  CrossTerms: false
+  MinD: 0.6
+  Radius: 0.25
+Normalization:
+  Symmetry: Ia-3
+  Projections: [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+  Extents: [[-16., 16.], [-16., 16.], [-0.1, 0.1]]
+  Bins: [601, 601, 1]
+

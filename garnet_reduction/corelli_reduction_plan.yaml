@@ -1,0 +1,28 @@
+Instrument: CORELLI
+IPTS: 15526
+Runs: 29715:29750
+UBFile: /SNS/CORELLI/IPTS-15526/shared/benzil_Hexagonal.mat 
+VanadiumFile: /SNS/CORELLI/shared/Vanadium/2016/2016B/SolidAngle20160720NoCC.nxs
+#BackgroundFile: /SNS/CORELLI/shared/Background/2022B_0725_CCR_5x7/background_2p5-8.nxs
+FluxFile: /SNS/CORELLI/shared/Vanadium/2016/2016B/Spectrum20160720NoCC.nxs
+#MaskFile: /SNS/CORELLI/shared/Vanadium/2022B_0725_CCR_5x7/integration.xml
+#DetectorCalibration: /SNS/CORELLI/shared/calibration/2022A/calibration.xml
+#TubeCalibration: /SNS/CORELLI/shared/calibration/tube/calibration_corelli_20200109.nxs.h5
+Elastic: false
+TimeOffset: null
+Integration:
+  Cell: Cubic
+  Centering: I
+  ModVec1: [0, 0, 0]
+  ModVec2: [0, 0, 0]
+  ModVec3: [0, 0, 0]
+  MaxOrder: 0
+  CrossTerms: false
+  MinD: 0.7
+  Radius: 0.25
+Normalization:
+  Symmetry: m-3m
+  Projections: [[1, 1, 0], [1, -1, 0], [0, 0, 1]]
+  Extents: [[-7.5375, 7.5375], [-13.16524, 13.16524], [-0.5, 0.5]]
+  Bins: [603, 603, 1]
+

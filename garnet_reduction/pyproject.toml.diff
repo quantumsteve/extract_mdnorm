@@ -1,0 +1,15 @@
+diff --git a/pyproject.toml b/pyproject.toml
+index c3fb89a..b0718fc 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -48,4 +48,10 @@ disable = ["too-many-locals",
+            "too-many-arguments",
+            "duplicate-code"
+ ]
++
++[tool.pytest.ini_options]
++pythonpath = [
++  ".", "src",
++]
++
+
