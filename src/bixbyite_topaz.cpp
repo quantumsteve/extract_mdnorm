@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
   std::vector<float> xValues;
   std::vector<double> yValues;
   std::vector<Eigen::Matrix3f> transforms;
-  std::vector<std::array<double, 8>> events;
+  Eigen::Matrix<float, Eigen::Dynamic, 8> events;
 
   int rank = world.rank();
   int N = BIXBYITE_EVENT_NXS_MAX - BIXBYITE_EVENT_NXS_MIN + 1;
@@ -206,6 +206,7 @@ int main(int argc, char *argv[]) {
       }
     }
     //REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));*/
+
     startt = std::chrono::high_resolution_clock::now();
     eventWS_changes.updateEvents(events);
     stopt = std::chrono::high_resolution_clock::now();
@@ -213,30 +214,25 @@ int main(int argc, char *argv[]) {
     std::cout << "rank: " << rank << " updateEvents time: " << duration_total << "s\n";
 
     startt = std::chrono::high_resolution_clock::now();
-    typedef Eigen::Matrix<float, 16, 3> SIMDVector3f;
+    constexpr int simd_size = 8;
+    typedef Eigen::Matrix<float, simd_size, 3, Eigen::AutoAlign> SIMDVector3f;
 #pragma omp parallel for
-    for (size_t i = 0; i < events.size() - 16; i += 16) {
+    for (size_t i = 0; i < events.rows() - simd_size; i += simd_size) {
       SIMDVector3f vi, vf;
-      for (size_t j = 0; j < 16; ++j) {
-        const auto &val = events[i + j];
-        vi(j, 0) = val[5];
-        vi(j, 1) = val[6];
-        vi(j, 2) = val[7];
-      }
+      for (size_t j = 0; j < 3; ++j)
+        vi.col(j) = events.block<simd_size, 1>(i, j + 5);
       for (const Eigen::Matrix3f &op : transforms2) {
         vf.transpose().noalias() = op * vi.transpose();
-        for (size_t j = 0; j < 16; ++j) {
-          h(vf(j, 0), vf(j, 1), vf(j, 2), weight(events[i + j][0]));
+        for (size_t j = 0; j < simd_size; ++j) {
+          h(vf(j, 0), vf(j, 1), vf(j, 2), weight(events(i + j, 0)));
         }
       }
     }
 #pragma omp parallel for collapse(2)
-    for (size_t i = events.size() - events.size() % 16; i < events.size(); ++i) {
+    for (size_t i = events.rows() - events.rows() % simd_size; i < events.rows(); ++i) {
       for (const Eigen::Matrix3f &op : transforms2) {
-        const auto &val = events[i];
-        Eigen::Vector3f vi(val[5], val[6], val[7]),vf;
-        vf.noalias() = op * vi;
-        h(vf[0], vf[1], vf[2], weight(val[0]));
+        Eigen::Vector3f vf = op * events.block<3, 1>(i, 5);
+        h(vf[0], vf[1], vf[2], weight(events(i, 0)));
       }
     }
     stopt = std::chrono::high_resolution_clock::now();
@@ -264,8 +260,8 @@ int main(int argc, char *argv[]) {
     std::cout << max_signal << " " <<  ref_max << std::endl;*/
   }
 
-  events.clear();
-  events.shrink_to_fit();
+  // events.clear();
+  // events.shrink_to_fit();
 
   histogram_type numerator, denominator;
 
