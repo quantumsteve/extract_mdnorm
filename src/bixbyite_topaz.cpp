@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
   std::vector<float> xValues;
   std::vector<double> yValues;
   std::vector<Eigen::Matrix3f> transforms;
-  Eigen::Matrix<float, Eigen::Dynamic, 8> events;
+  Eigen::Matrix<float, Eigen::Dynamic, 3> events;
 
   int rank = world.rank();
   int N = BIXBYITE_EVENT_NXS_MAX - BIXBYITE_EVENT_NXS_MIN + 1;
@@ -146,7 +146,7 @@ int main(int argc, char *argv[]) {
     }
 
     auto event_filename_changes =
-        std::string(BIXBYITE_EVENT_NXS_PREFIX).append(std::to_string(file_num)).append("_BEFORE_MDNorm.nxs");
+        std::string(BIXBYITE_EVENT_NXS_PREFIX).append(std::to_string(file_num)).append("_events.nxs");
     LoadEventWorkspace eventWS_changes(event_filename_changes);
     const double protonCharge = eventWS_changes.getProtonCharge();
 
@@ -218,21 +218,22 @@ int main(int argc, char *argv[]) {
     typedef Eigen::Matrix<float, simd_size, 3, Eigen::AutoAlign> SIMDVector3f;
 #pragma omp parallel for
     for (int64_t i = 0; i < events.rows() - simd_size; i += simd_size) {
-      SIMDVector3f vi, vf;
-      for (int j = 0; j < 3; ++j)
-        vi.col(j) = events.block<simd_size, 1>(i, j + 5);
+      SIMDVector3f vf;
+      // for (int j = 0; j < 3; ++j)
+      //     vi.col(j) = events.block<simd_size, 1>(i, j);
+      const auto vi = events.block<simd_size, 3>(i, 0).transpose();
       for (const Eigen::Matrix3f &op : transforms2) {
-        vf.transpose().noalias() = op * vi.transpose();
+        vf.transpose().noalias() = op * vi;
         for (int j = 0; j < simd_size; ++j) {
-          h(vf(j, 0), vf(j, 1), vf(j, 2), weight(events(i + j, 0)));
+          h(vf(j, 0), vf(j, 1), vf(j, 2)); //, weight(events(i + j, 0)));
         }
       }
     }
 #pragma omp parallel for collapse(2)
     for (int64_t i = events.rows() - events.rows() % simd_size; i < events.rows(); ++i) {
       for (const Eigen::Matrix3f &op : transforms2) {
-        Eigen::Vector3f vf = op * events.block<3, 1>(i, 5);
-        h(vf[0], vf[1], vf[2], weight(events(i, 0)));
+        Eigen::Vector3f vf = op * events.block<1, 3>(i, 0).transpose();
+        h(vf[0], vf[1], vf[2]); //, weight(events(i, 0)));
       }
     }
     stopt = std::chrono::high_resolution_clock::now();
