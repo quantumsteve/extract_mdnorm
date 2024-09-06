@@ -110,3 +110,10 @@ void LoadEventWorkspace::updateEvents(Eigen::Matrix<float, Eigen::Dynamic, 8> &e
   auto dataset = group2.getDataSet("event_data");
   dataset.read(events);
 }
+
+void LoadEventWorkspace::updateEvents(Eigen::Matrix<float, Eigen::Dynamic, 3> &events) const {
+  HighFive::Group group = m_file.getGroup("MDEventWorkspace");
+  HighFive::Group group2 = group.getGroup("event_data");
+  auto dataset = group2.getDataSet("position");
+  dataset.read(events);
+}
