@@ -23,6 +23,7 @@ public:
   void updateEvents(std::vector<std::array<float, 8>> &events) const;
   void updateEvents(std::vector<std::array<double, 8>> &events) const;
   void updateEvents(Eigen::Matrix<float, Eigen::Dynamic, 8> &events) const;
+  void updateEvents(Eigen::Matrix<float, Eigen::Dynamic, 3> &events) const;
 
   std::vector<int> getDetIDs() const;
 
