@@ -1,4 +1,5 @@
 #include "LoadEventWorkspace.h"
+#include "LoadEventWorkspace2.h"
 #include "LoadExtrasWorkspace.h"
 #include "LoadFluxWorkspace.h"
 #include "LoadSolidAngleWorkspace.h"
