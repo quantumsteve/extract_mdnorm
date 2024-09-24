@@ -1,4 +1,5 @@
 #include "LoadEventWorkspace.h"
+#include "LoadEventWorkspace2.h"
 #include "LoadExtrasWorkspace.h"
 #include "LoadFluxWorkspace.h"
 #include "LoadSolidAngleWorkspace.h"
@@ -115,7 +116,7 @@ int main(int argc, char *argv[]) {
   std::vector<float> xValues;
   std::vector<double> yValues;
   std::vector<Eigen::Matrix3f> transforms;
-  Eigen::Matrix<float, Eigen::Dynamic, 3> events;
+  Eigen::Matrix<float, Eigen::Dynamic, 3> events, events2;
 
   int rank = world.rank();
   int N = BIXBYITE_EVENT_NXS_MAX - BIXBYITE_EVENT_NXS_MIN + 1;
@@ -137,6 +138,7 @@ int main(int argc, char *argv[]) {
     auto rot_filename_changes =
         std::string(BIXBYITE_EVENT_NXS_PREFIX).append(std::to_string(file_num)).append("_extra_params.hdf5");
     LoadExtrasWorkspace extras_changes(rot_filename_changes);
+
     auto rotMatrix = extras_changes.getRotMatrix();
 
     transforms.clear();
@@ -148,8 +150,11 @@ int main(int argc, char *argv[]) {
     auto event_filename_changes =
         std::string(BIXBYITE_EVENT_NXS_PREFIX).append(std::to_string(file_num)).append("_events.nxs");
     LoadEventWorkspace eventWS_changes(event_filename_changes);
-    const double protonCharge = eventWS_changes.getProtonCharge();
+    LoadEventWorkspace2 eventWS_changes2(event_filename_changes);
 
+    const double protonCharge = eventWS_changes.getProtonCharge();
+    const double protonCharge2 = eventWS_changes2.getProtonCharge();
+    std::cout << protonCharge << " " << protonCharge2 << '\n';
     auto startt = std::chrono::high_resolution_clock::now();
 #pragma omp parallel for collapse(2) private(idx, momentum, intersections, xValues, yValues)
     for (const Eigen::Matrix3f &op : transforms) {
@@ -212,6 +217,12 @@ int main(int argc, char *argv[]) {
     stopt = std::chrono::high_resolution_clock::now();
     duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
     std::cout << "rank: " << rank << " updateEvents time: " << duration_total << "s\n";
+
+    startt = std::chrono::high_resolution_clock::now();
+    eventWS_changes2.updateEvents(events2);
+    stopt = std::chrono::high_resolution_clock::now();
+    duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
+    std::cout << "rank: " << rank << " updateEvents2 time: " << duration_total << "s\n";
 
     startt = std::chrono::high_resolution_clock::now();
     constexpr int simd_size = 8;

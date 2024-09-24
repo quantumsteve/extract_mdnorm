@@ -32,7 +32,7 @@ find_package(Eigen3 REQUIRED)
 find_package(HDF5 REQUIRED)
 find_package(OpenMP REQUIRED)
 set(HIGHFIVE_GIT_REPOSITORY https://github.com/BlueBrain/HighFive.git)
-set(HIGHFIVE_GIT_TAG d79b5acc758cc9c5e1733afc88d3b3ca66316150)
+set(HIGHFIVE_GIT_TAG v3.0.0-beta1)
 set(HIGHFIVE_UNIT_TESTS OFF)
 set(HIGHFIVE_USE_BOOST OFF)
 set(HIGHFIVE_USE_EIGEN ON)
@@ -126,6 +126,7 @@ add_executable(bixbyite_topaz src/calculateIntersections.cpp
                                         src/LoadFluxWorkspace.cpp
                                         src/LoadSolidAngleWorkspace.cpp
                                         src/LoadEventWorkspace.cpp
+					src/LoadEventWorkspace2.cpp
                                         src/LoadExtrasWorkspace.cpp
                                         )
 
