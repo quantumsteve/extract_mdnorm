@@ -128,6 +128,7 @@ add_executable(bixbyite_topaz src/calculateIntersections.cpp
                                         src/LoadFluxWorkspace.cpp
                                         src/LoadSolidAngleWorkspace.cpp
                                         src/LoadEventWorkspace.cpp
+					src/LoadEventWorkspace2.cpp
                                         src/LoadExtrasWorkspace.cpp
                                         )
 
