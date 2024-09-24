@@ -155,7 +155,7 @@ int main(int argc, char *argv[]) {
 
     const double protonCharge = eventWS_changes.getProtonCharge();
     const double protonCharge2 = eventWS_changes2.getProtonCharge();
-    std::cout << protonCharge << " " << protonCharge2 << '\n';
+    std::cout << "proton Charge? " << protonCharge << " " << protonCharge2 << '\n';
     auto startt = std::chrono::high_resolution_clock::now();
 #pragma omp parallel for collapse(2) private(idx, momentum, intersections, xValues, yValues)
     for (const Eigen::Matrix3f &op : transforms) {
@@ -225,9 +225,7 @@ int main(int argc, char *argv[]) {
     duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
     std::cout << "rank: " << rank << " updateEvents2 time: " << duration_total << "s\n";
 
-    // for (int i = 0; i < 3; ++i)
-    //  std::cout << events(i, 0) << " " << events2(0, i) << std::endl;
-    std::cout << events.isApprox(events2.transpose()) << std::endl;
+    std::cout << "isApprox? " << static_cast<bool>(events.isApprox(events2.transpose())) << std::endl;
 
     startt = std::chrono::high_resolution_clock::now();
     constexpr int simd_size = 8;
@@ -235,8 +233,6 @@ int main(int argc, char *argv[]) {
 #pragma omp parallel for
     for (int64_t i = 0; i < events.rows() - simd_size; i += simd_size) {
       SIMDVector3f vf;
-      // for (int j = 0; j < 3; ++j)
-      //     vi.col(j) = events.block<simd_size, 1>(i, j);
       const auto &vi = events2.block<simd_size, 3>(i, 0).transpose();
       for (const Eigen::Matrix3f &op : transforms2) {
         vf.transpose().noalias() = op * vi;
