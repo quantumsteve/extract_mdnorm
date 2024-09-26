@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
   std::vector<float> xValues;
   std::vector<double> yValues;
   std::vector<Eigen::Matrix3f> transforms;
-  Eigen::Matrix<float, 3, Eigen::Dynamic> events;
+  //Eigen::Matrix<float, 3, Eigen::Dynamic> events;
   Eigen::Matrix<float, Eigen::Dynamic, 3> events2;
 
   int rank = world.rank();
@@ -213,11 +213,11 @@ int main(int argc, char *argv[]) {
     }
     //REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));*/
 
-    startt = std::chrono::high_resolution_clock::now();
-    eventWS_changes.updateEvents(events);
-    stopt = std::chrono::high_resolution_clock::now();
-    duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
-    std::cout << "rank: " << rank << " updateEvents time: " << duration_total << "s\n";
+    //startt = std::chrono::high_resolution_clock::now();
+    //eventWS_changes.updateEvents(events);
+    //stopt = std::chrono::high_resolution_clock::now();
+    //duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
+    //std::cout << "rank: " << rank << " updateEvents time: " << duration_total << "s\n";
 
     startt = std::chrono::high_resolution_clock::now();
     eventWS_changes2.updateEvents(events2);
@@ -225,13 +225,13 @@ int main(int argc, char *argv[]) {
     duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
     std::cout << "rank: " << rank << " updateEvents2 time: " << duration_total << "s\n";
 
-    std::cout << "isApprox? " << static_cast<bool>(events.isApprox(events2.transpose())) << std::endl;
+    //std::cout << "isApprox? " << static_cast<bool>(events.isApprox(events2.transpose())) << std::endl;
 
     startt = std::chrono::high_resolution_clock::now();
     constexpr int simd_size = 8;
     typedef Eigen::Matrix<float, simd_size, 3, Eigen::AutoAlign> SIMDVector3f;
 #pragma omp parallel for
-    for (int64_t i = 0; i < events.rows() - simd_size; i += simd_size) {
+    for (int64_t i = 0; i < events2.rows() - simd_size; i += simd_size) {
       SIMDVector3f vf;
       const auto &vi = events2.block<simd_size, 3>(i, 0).transpose();
       for (const Eigen::Matrix3f &op : transforms2) {
@@ -242,13 +242,14 @@ int main(int argc, char *argv[]) {
       }
     }
 #pragma omp parallel for collapse(2)
-    for (int64_t i = events.rows() - events.rows() % simd_size; i < events.rows(); ++i) {
+    for (int64_t i = events2.rows() - events2.rows() % simd_size; i < events2.rows(); ++i) {
       for (const Eigen::Matrix3f &op : transforms2) {
         Eigen::Vector3f vf = op * events2.block<1, 3>(i, 0).transpose();
         h(vf[0], vf[1], vf[2]); //, weight(events(i, 0)));
       }
     }
     stopt = std::chrono::high_resolution_clock::now();
+    std::cout << events2.rows() << " " << events2.cols() << std::endl;
     duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
     std::cout << "rank: " << rank << " BinMD time: " << duration_total << "s\n";
 
