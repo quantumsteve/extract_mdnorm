@@ -2,8 +2,8 @@
 
 #include <algorithm>
 #include <cassert>
+#include <iostream>
 #include <numeric>
-
 // function to  compare two intersections (h,k,l,Momentum) by Momentum
 static bool compareMomentum(const std::array<float, 4> &v1, const std::array<float, 4> &v2) {
   return (v1[3] < v2[3]);
@@ -306,7 +306,7 @@ void MDNorm::calculateIntersections(histogram_type &h, std::vector<int> &idx, st
   // sort intersections by final momentum
   idx.resize(intersections.size());
   std::iota(idx.begin(), idx.end(), 0);
-  std::sort(idx.begin(), idx.end(), [&momentum](int i1, int i2) { return momentum[i1] < momentum[i2]; });
+  x86simdsort::keyvalue_qsort(momentum.data(), idx.data(), momentum.size());
 }
 
 /**
@@ -328,7 +328,7 @@ void MDNorm::calcSingleDetectorNorm(const std::vector<int> &idx, const std::vect
     // intersection normalization is to be calculated
     // diffraction
     float delta = xValues[k] - xValues[k - 1];
-    float eps = 1e-7f;
+    const float eps = 1e-7;
     if (delta < eps)
       continue; // Assume zero contribution if difference is small
 
