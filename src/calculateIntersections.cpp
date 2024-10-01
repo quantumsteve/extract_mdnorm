@@ -222,10 +222,11 @@ void MDNorm::calculateIntersections(histogram_type &h, std::vector<int> &idx, st
     }
   }
 
+  auto reserved_size = hEndIdx - hStartIdx + kEndIdx - kStartIdx + lEndIdx - lStartIdx + 5;
   intersections.clear();
-  intersections.reserve(hNBins + kNBins + lNBins + 2);
+  intersections.reserve(reserved_size);
   momentum.clear();
-  momentum.reserve(hNBins + kNBins + lNBins + 2);
+  momentum.reserve(reserved_size);
 
   // calculate intersections with planes perpendicular to h
   {
