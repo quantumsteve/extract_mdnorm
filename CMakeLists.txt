@@ -112,6 +112,7 @@ target_include_directories(garnet_reduction_corelli PRIVATE ${PROJECT_BINARY_DIR
 add_executable(benzil_corelli src/calculateIntersections.cpp
                                         src/calcDiffractionIntersectionIntegral.cpp
                                         src/benzil_corelli.cpp
+                                        src/mdnorm.cpp
                                         src/LoadFluxWorkspace.cpp
                                         src/LoadSolidAngleWorkspace.cpp
                                         src/LoadEventWorkspace.cpp
@@ -122,7 +123,8 @@ target_include_directories(benzil_corelli PRIVATE ${PROJECT_BINARY_DIR}/include 
 
 add_executable(bixbyite_topaz src/calculateIntersections.cpp
                                         src/calcDiffractionIntersectionIntegral.cpp
-                                        src/bixbyite_topaz.cpp 
+                                        src/bixbyite_topaz.cpp
+                                        src/mdnorm.cpp
                                         src/LoadFluxWorkspace.cpp
                                         src/LoadSolidAngleWorkspace.cpp
                                         src/LoadEventWorkspace.cpp
