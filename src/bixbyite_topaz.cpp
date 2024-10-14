@@ -4,7 +4,6 @@
 #include "LoadSolidAngleWorkspace.h"
 #include "calcDiffractionIntersectionIntegral.h"
 #include "calculateIntersections.h"
-
 #include "validation_data_filepath.h"
 
 #include <boost/histogram.hpp>
@@ -15,7 +14,6 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <optional>
 #include <tuple>
 #include <vector>
 
@@ -163,9 +161,7 @@ int main(int argc, char *argv[]) {
         if (auto index = fluxDetToIdx.find(detID); index != fluxDetToIdx.end())
           wsIdx = index->second;
         else // masked detector in flux, but not in input workspace
-        {
           continue;
-        }
 
         doctest.calculateIntersections(signal, idx, momentum, intersections, thetaValues[i], phiValues[i], op,
                                        lowValues[i], highValues[i]);
@@ -186,26 +182,6 @@ int main(int argc, char *argv[]) {
     auto stopt = std::chrono::high_resolution_clock::now();
     double duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
     std::cout << "rank: " << rank << " MDNorm time: " << duration_total << "s\n";
-
-    /*HighFive::File norm_file(BIXBYITE_EVENT_NXS_PREFIX+"_0_norm.hdf5",
-    HighFive::File::ReadOnly); HighFive::Group norm_group = norm_file.getGroup("MDHistoWorkspace"); HighFive::Group
-    norm_group2 = norm_group.getGroup("data"); HighFive::DataSet norm_dataset = norm_group2.getDataSet("signal"); dims
-    = norm_dataset.getDimensions(); REQUIRE(dims.size() == 3); REQUIRE(dims[0] == 1); REQUIRE(dims[1] == 603);
-    REQUIRE(dims[2] == 603);
-    std::vector<std::vector<std::vector<double>>> data;
-    norm_dataset.read(data);
-
-    auto &data2d = data[0];
-    double max_signal = *std::max_element(signal.begin(), signal.end());
-
-    double ref_max{0.};
-    for (size_t i = 0; i < dims[1]; ++i) {
-      for (size_t j = 0; j < dims[2]; ++j) {
-        //REQUIRE_THAT(data2d[i][j], Catch::Matchers::WithinAbs(signal.at(j, i, 0), 5.e+05));
-        ref_max = std::max(ref_max, data2d[i][j]);
-      }
-    }
-    //REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));*/
 
     startt = std::chrono::high_resolution_clock::now();
     eventWS_changes.updateEvents(events);
@@ -231,38 +207,14 @@ int main(int argc, char *argv[]) {
 #pragma omp parallel for collapse(2)
     for (int64_t i = events.rows() - events.rows() % simd_size; i < events.rows(); ++i) {
       for (const Eigen::Matrix3f &op : transforms2) {
-        Eigen::Vector3f vf = op * events.block<3, 1>(i, 5);
+        Eigen::Vector3f vf = op * events.block<1, 3>(i, 5).transpose();
         h(vf[0], vf[1], vf[2], weight(events(i, 0)));
       }
     }
     stopt = std::chrono::high_resolution_clock::now();
     duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
     std::cout << "rank: " << rank << " BinMD time: " << duration_total << "s\n";
-
-    /*HighFive::File data_file(BIXBYITE_EVENT_NXS_PREFIX+"0_data.hdf5",
-    HighFive::File::ReadOnly); HighFive::Group data_group = data_file.getGroup("MDHistoWorkspace"); HighFive::Group
-    data_group2 = data_group.getGroup("data"); HighFive::DataSet data_dataset = data_group2.getDataSet("signal"); dims
-    = data_dataset.getDimensions(); REQUIRE(dims.size() == 3); REQUIRE(dims[0] == 1); REQUIRE(dims[1] == 603);
-    REQUIRE(dims[2] == 603);
-    norm_dataset.read(data);
-
-    data2d = data[0];
-    max_signal = *std::max_element(h.begin(), h.end());
-
-    ref_max = 0.;
-    for (size_t i = 0; i < dims[1]; ++i) {
-      for (size_t j = 0; j < dims[2]; ++j) {
-        //REQUIRE_THAT(data2d[i][j], Catch::Matchers::WithinAbs(h.at(j, i, 0), 5.e+05));
-        ref_max = std::max(ref_max, data2d[i][j]);
-      }
-    }
-    //REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));
-    std::cout << max_signal << " " <<  ref_max << std::endl;*/
   }
-
-  // events.clear();
-  // events.shrink_to_fit();
-
   histogram_type numerator, denominator;
 
   if (world.rank() == 0) {
@@ -274,10 +226,8 @@ int main(int argc, char *argv[]) {
   }
 
   auto startt = std::chrono::high_resolution_clock::now();
-
   reduce(world, h, numerator, std::plus<histogram_type>(), 0);
   reduce(world, signal, denominator, std::plus<histogram_type>(), 0);
-
   auto stopt = std::chrono::high_resolution_clock::now();
   auto duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
   std::cout << "rank: " << rank << " reduce time: " << duration_total << "s\n";

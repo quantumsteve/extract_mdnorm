@@ -40,9 +40,7 @@ int main(int argc, char *argv[]) {
 
   using namespace boost::histogram;
   using reg = axis::regular<float>;
-  std::tuple<reg, reg, reg> axes{reg(603, -7.5375, 7.5375, "x"), reg(603, -13.16524, 13.16524, "y"),
-                                 reg(1, -0.5, 0.5, "z")};
-  //std::tuple<reg, reg, reg> axes{reg(201, -10., 10., "x"), reg(201, -10., 10., "y"), reg(201, -10., 10., "z")};
+  std::tuple<reg, reg, reg> axes{reg(603, -7.5375, 7.5375, "x"), reg(603, -13.16524, 13.16524, "y"), reg(1, -0.5, 0.5, "z")};
 
   std::vector<float> hX, kX, lX;
   {
@@ -95,6 +93,7 @@ int main(int argc, char *argv[]) {
   const std::vector<bool> skip_dets = extras.getSkipDets();
 
   auto event_filename = std::string(BENZIL_EVENT_NXS_PREFIX).append("0_BEFORE_MDNorm.nxs");
+
   LoadEventWorkspace eventWS(event_filename);
   const std::vector<float> lowValues = eventWS.getLowValues();
   const std::vector<float> highValues = eventWS.getHighValues();
@@ -138,16 +137,16 @@ int main(int argc, char *argv[]) {
     LoadExtrasWorkspace extras_changes(rot_filename_changes);
     Eigen::Matrix3f rotMatrix = extras_changes.getRotMatrix();
 
-    auto event_filename_changes =
-        std::string(BENZIL_EVENT_NXS_PREFIX).append(std::to_string(file_num)).append("_BEFORE_MDNorm.nxs");
-    LoadEventWorkspace eventWS_changes(event_filename_changes);
-    double protonCharge = eventWS_changes.getProtonCharge();
-
     transforms.clear();
     for (const Eigen::Matrix3f &op : symm) {
       Eigen::Matrix3f transform = rotMatrix * m_UB * op * m_W;
       transforms.push_back(transform.inverse());
     }
+
+    auto event_filename_changes =
+        std::string(BENZIL_EVENT_NXS_PREFIX).append(std::to_string(file_num)).append("_BEFORE_MDNorm.nxs");
+    LoadEventWorkspace eventWS_changes(event_filename_changes);
+    double protonCharge = eventWS_changes.getProtonCharge();
 
     auto startt = std::chrono::high_resolution_clock::now();
 #pragma omp parallel for collapse(2) private(idx, momentum, intersections, xValues, yValues)
@@ -184,26 +183,6 @@ int main(int argc, char *argv[]) {
     double duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
     std::cout << "rank: " << rank << " MDNorm time: " << duration_total << "s\n";
 
-    /*HighFive::File norm_file(BENZIL_EVENT_NXS_PREFIX + "0_norm.hdf5",
-    HighFive::File::ReadOnly); HighFive::Group norm_group = norm_file.getGroup("MDHistoWorkspace"); HighFive::Group
-    norm_group2 = norm_group.getGroup("data"); HighFive::DataSet norm_dataset = norm_group2.getDataSet("signal"); dims
-    = norm_dataset.getDimensions(); REQUIRE(dims.size() == 3); REQUIRE(dims[0] == 1); REQUIRE(dims[1] == 603);
-    REQUIRE(dims[2] == 603);
-    std::vector<std::vector<std::vector<double>>> data;
-    norm_dataset.read(data);
-
-    auto &data2d = data[0];
-    double max_signal = *std::max_element(signal.begin(), signal.end());
-
-    double ref_max{0.};
-    for (size_t i = 0; i < dims[1]; ++i) {
-      for (size_t j = 0; j < dims[2]; ++j) {
-        //REQUIRE_THAT(data2d[i][j], Catch::Matchers::WithinAbs(signal.at(j, i, 0), 5.e+05));
-        ref_max = std::max(ref_max, data2d[i][j]);
-      }
-    }
-    //REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));*/
-
     startt = std::chrono::high_resolution_clock::now();
     eventWS_changes.updateEvents(events);
     stopt = std::chrono::high_resolution_clock::now();
@@ -215,11 +194,10 @@ int main(int argc, char *argv[]) {
     typedef Eigen::Matrix<float, simd_size, 3, Eigen::AutoAlign> SIMDVector3f;
 #pragma omp parallel for
     for (int64_t i = 0; i < events.rows() - simd_size; i += simd_size) {
-      SIMDVector3f vi, vf;
-      for (int j = 0; j < 3; ++j)
-        vi.col(j) = events.block<simd_size, 1>(i, j + 5);
+      SIMDVector3f vf;
+      const auto &vi =events.block<simd_size, 3>(i, 5).transpose();
       for (const Eigen::Matrix3f &op : transforms2) {
-        vf.transpose().noalias() = op * vi.transpose();
+        vf.transpose().noalias() = op * vi;
         for (int j = 0; j < simd_size; ++j) {
           h(vf(j, 0), vf(j, 1), vf(j, 2), weight(events(i + j, 0)));
         }
@@ -228,38 +206,14 @@ int main(int argc, char *argv[]) {
 #pragma omp parallel for collapse(2)
     for (int64_t i = events.rows() - events.rows() % simd_size; i < events.rows(); ++i) {
       for (const Eigen::Matrix3f &op : transforms2) {
-        Eigen::Vector3f vf = op * events.block<3, 1>(i, 5);
+        Eigen::Vector3f vf = op * events.block<1, 3>(i, 5).transpose();
         h(vf[0], vf[1], vf[2], weight(events(i, 0)));
       }
     }
     stopt = std::chrono::high_resolution_clock::now();
     duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
     std::cout << "rank: " << rank << " BinMD time: " << duration_total << "s\n";
-
-    /*HighFive::File data_file(BENZIL_EVENT_NXS_PREFIX + "0_data.hdf5",
-    HighFive::File::ReadOnly); HighFive::Group data_group = data_file.getGroup("MDHistoWorkspace"); HighFive::Group
-    data_group2 = data_group.getGroup("data"); HighFive::DataSet data_dataset = data_group2.getDataSet("signal"); dims
-    = data_dataset.getDimensions(); REQUIRE(dims.size() == 3); REQUIRE(dims[0] == 1); REQUIRE(dims[1] == 603);
-    REQUIRE(dims[2] == 603);
-    norm_dataset.read(data);
-
-    data2d = data[0];
-    max_signal = *std::max_element(h.begin(), h.end());
-
-    ref_max = 0.;
-    for (size_t i = 0; i < dims[1]; ++i) {
-      for (size_t j = 0; j < dims[2]; ++j) {
-        //REQUIRE_THAT(data2d[i][j], Catch::Matchers::WithinAbs(h.at(j, i, 0), 5.e+05));
-        ref_max = std::max(ref_max, data2d[i][j]);
-      }
-    }
-    //REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));
-    std::cout << max_signal << " " <<  ref_max << std::endl;*/
   }
-
-  // events.clear();
-  // events.shrink_to_fit();
-
   histogram_type numerator, denominator;
 
   if (world.rank() == 0) {
