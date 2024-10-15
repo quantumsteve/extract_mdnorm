@@ -1,5 +1,6 @@
 #include "mdnorm.h"
 #include "LoadEventWorkspace.h"
+#include "LoadEventWorkspace2.h"
 #include "LoadExtrasWorkspace.h"
 #include "LoadFluxWorkspace.h"
 #include "LoadSolidAngleWorkspace.h"
@@ -88,7 +89,7 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
   std::vector<float> xValues;
   std::vector<double> yValues;
   std::vector<Eigen::Matrix3f> transforms;
-  Eigen::Matrix<float, Eigen::Dynamic, 8> events;
+  Eigen::Matrix<float, Eigen::Dynamic, 3> events;
 
   std::cout << params.eventStart << " " <<params.eventStop << std::endl;
   for (int file_num = params.eventMin + params.eventStart; file_num <= params.eventMin + params.eventStop; ++file_num) {
@@ -104,8 +105,8 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
     }
 
     auto event_filename_changes =
-        std::string(params.eventPrefix).append(std::to_string(file_num)).append("_BEFORE_MDNorm.nxs");
-    LoadEventWorkspace eventWS_changes(event_filename_changes);
+        std::string(params.eventPrefix).append(std::to_string(file_num)).append("_events.nxs");
+    LoadEventWorkspace2 eventWS_changes(event_filename_changes);
     const double protonCharge = eventWS_changes.getProtonCharge();
 
     auto startt = std::chrono::high_resolution_clock::now();
@@ -155,19 +156,19 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
 #pragma omp parallel for
     for (int64_t i = 0; i < events.rows() - simd_size; i += simd_size) {
       SIMDVector3f vf;
-      const auto &vi =events.block<simd_size, 3>(i, 5).transpose();
+      const auto &vi = events.block<simd_size, 3>(i, 0).transpose();
       for (const Eigen::Matrix3f &op : transforms2) {
         vf.transpose().noalias() = op * vi;
         for (int j = 0; j < simd_size; ++j) {
-          h(vf(j, 0), vf(j, 1), vf(j, 2), weight(events(i + j, 0)));
+          h(vf(j, 0), vf(j, 1), vf(j, 2));//, weight(events(i + j, 0)));
         }
       }
     }
 #pragma omp parallel for collapse(2)
     for (int64_t i = events.rows() - events.rows() % simd_size; i < events.rows(); ++i) {
       for (const Eigen::Matrix3f &op : transforms2) {
-        Eigen::Vector3f vf = op * events.block<1, 3>(i, 5).transpose();
-        h(vf[0], vf[1], vf[2], weight(events(i, 0)));
+        Eigen::Vector3f vf = op * events.block<1, 3>(i, 0).transpose();
+        h(vf[0], vf[1], vf[2]);//, weight(events(i, 0)));
       }
     }
     stopt = std::chrono::high_resolution_clock::now();
