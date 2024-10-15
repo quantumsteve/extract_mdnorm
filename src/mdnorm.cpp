@@ -1,5 +1,6 @@
 #include "mdnorm.h"
 #include "LoadEventWorkspace.h"
+#include "LoadEventWorkspace2.h"
 #include "LoadExtrasWorkspace.h"
 #include "LoadFluxWorkspace.h"
 #include "LoadSolidAngleWorkspace.h"
@@ -136,7 +137,7 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
   std::vector<float> xValues;
   std::vector<double> yValues;
   std::vector<Eigen::Matrix3f> transforms;
-  Eigen::Matrix<float, Eigen::Dynamic, 8> events;
+  Eigen::Matrix<float, Eigen::Dynamic, 3> events;
 
   std::cout << params.eventStart << " " <<params.eventStop << std::endl;
   for (int file_num = params.eventMin + params.eventStart; file_num <= params.eventMin + params.eventStop; ++file_num) {
@@ -152,8 +153,8 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
     }
 
     auto event_filename_changes =
-        std::string(params.eventPrefix).append(std::to_string(file_num)).append("_BEFORE_MDNorm.nxs");
-    LoadEventWorkspace eventWS_changes(event_filename_changes);
+        std::string(params.eventPrefix).append(std::to_string(file_num)).append("_events.nxs");
+    LoadEventWorkspace2 eventWS_changes(event_filename_changes);
     const double protonCharge = eventWS_changes.getProtonCharge();
 
     auto startt = std::chrono::high_resolution_clock::now();
