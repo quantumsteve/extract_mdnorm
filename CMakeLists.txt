@@ -116,6 +116,7 @@ add_executable(benzil_corelli src/calculateIntersections.cpp
                                         src/LoadFluxWorkspace.cpp
                                         src/LoadSolidAngleWorkspace.cpp
                                         src/LoadEventWorkspace.cpp
+                                        src/LoadEventWorkspace2.cpp
                                         src/LoadExtrasWorkspace.cpp
                                         )
 target_link_libraries(benzil_corelli HighFive Eigen3::Eigen Catch2::Catch2WithMain Boost::boost Boost::mpi ${MPI_CXX_LIBRARIES} OpenMP::OpenMP_CXX)
@@ -128,7 +129,7 @@ add_executable(bixbyite_topaz src/calculateIntersections.cpp
                                         src/LoadFluxWorkspace.cpp
                                         src/LoadSolidAngleWorkspace.cpp
                                         src/LoadEventWorkspace.cpp
-					src/LoadEventWorkspace2.cpp
+					                              src/LoadEventWorkspace2.cpp
                                         src/LoadExtrasWorkspace.cpp
                                         )
 

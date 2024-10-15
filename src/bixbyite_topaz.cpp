@@ -1,24 +1,15 @@
 #include "histogram.h"
-#include "LoadEventWorkspace.h"
-#include "LoadEventWorkspace2.h"
-#include "LoadExtrasWorkspace.h"
-#include "LoadFluxWorkspace.h"
-#include "LoadSolidAngleWorkspace.h"
-#include "calcDiffractionIntersectionIntegral.h"
-#include "calculateIntersections.h"
 #include "mdnorm.h"
 #include "parameters.h"
 #include "validation_data_filepath.h"
 
 #include <boost/histogram/serialization.hpp>
 #include <boost/mpi.hpp>
-#include <highfive/highfive.hpp>
 
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <tuple>
-#include <vector>
 
 namespace boost {
 namespace mpi {
