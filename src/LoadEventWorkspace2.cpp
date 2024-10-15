@@ -25,8 +25,8 @@ void LoadEventWorkspace2::updateEvents(Eigen::Matrix<float, Eigen::Dynamic, 3> &
 
   hid_t dataspace = H5Dget_space(dataset);
   hsize_t rank = H5Sget_simple_extent_ndims(dataspace);
-  std::array<hsize_t,2> dims_out;
-  auto status = H5Sget_simple_extent_dims(dataspace, dims_out.data(), NULL);
+  std::array<hsize_t,  2> dims_out;
+  auto status = H5Sget_simple_extent_dims(dataspace, dims_out.data(), nullptr);
 
   events.resize(dims_out[1], dims_out[0]);
   status = H5Dread(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, events.data());
