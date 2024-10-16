@@ -4,10 +4,10 @@
 #include "LoadSolidAngleWorkspace.h"
 #include "calcDiffractionIntersectionIntegral.h"
 #include "calculateIntersections.h"
+#include "histogram.h"
 #include "validation_data_filepath.h"
 
 #include "catch2/catch_all.hpp"
-#include <boost/histogram.hpp>
 #include <highfive/eigen.hpp>
 #include <highfive/highfive.hpp>
 
@@ -77,8 +77,8 @@ TEST_CASE("calculateIntersections") {
     const std::vector<int> detIDs = eventWS.getDetIDs();
     const std::vector<std::array<double, 8>> events = eventWS.getEvents();
 
-    auto signal = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
-                                      std::get<1>(axes), std::get<2>(axes));
+    auto signal =
+        make_histogram_with(dense_storage<accumulator_type>(), std::get<0>(axes), std::get<1>(axes), std::get<2>(axes));
 
     std::vector<Eigen::Matrix3f> transforms;
     for (const Eigen::Matrix3f &op : symm) {
@@ -146,19 +146,19 @@ TEST_CASE("calculateIntersections") {
     norm_dataset.read(data);
 
     auto &data2d = data[0];
-    double max_signal = *std::max_element(signal.begin(), signal.end());
+    double max_signal = static_cast<double>(*std::max_element(signal.begin(), signal.end()));
 
     double ref_max{0.};
     for (size_t i = 0; i < dims[1]; ++i) {
       for (size_t j = 0; j < dims[2]; ++j) {
-        REQUIRE_THAT(data2d[i][j], Catch::Matchers::WithinAbs(signal.at(j, i, 0), 5.e+05));
+        REQUIRE_THAT(data2d[i][j], Catch::Matchers::WithinAbs(static_cast<double>(signal.at(j, i, 0)), 5.e+05));
         ref_max = std::max(ref_max, data2d[i][j]);
       }
     }
     REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));
 
-    auto h = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
-                                 std::get<1>(axes), std::get<2>(axes));
+    auto h =
+        make_histogram_with(dense_storage<accumulator_type>(), std::get<0>(axes), std::get<1>(axes), std::get<2>(axes));
     start = std::chrono::high_resolution_clock::now();
 
 #pragma omp parallel for collapse(2)
@@ -175,11 +175,11 @@ TEST_CASE("calculateIntersections") {
 
     std::vector<double> out;
     for (auto &&x : indexed(h))
-      out.push_back(*x);
+      out.push_back(static_cast<double>(*x));
 
     std::vector<double> meow;
     for (auto &&x : indexed(signal))
-      meow.push_back(*x);
+      meow.push_back(static_cast<double>(*x));
 
     std::ofstream out_strm("meow.txt");
     for (size_t i = 0; i < out.size(); ++i)

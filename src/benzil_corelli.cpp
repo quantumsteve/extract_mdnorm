@@ -4,12 +4,12 @@
 #include "LoadSolidAngleWorkspace.h"
 #include "calcDiffractionIntersectionIntegral.h"
 #include "calculateIntersections.h"
+#include "histogram.h"
 #include "mdnorm.h"
 #include "parameters.h"
 #include "validation_data_filepath.h"
 
 #include <Eigen/Core>
-#include <boost/histogram.hpp>
 #include <boost/histogram/serialization.hpp>
 #include <boost/mpi.hpp>
 #include <highfive/highfive.hpp>
@@ -19,11 +19,6 @@
 #include <iostream>
 #include <tuple>
 #include <vector>
-
-using histogram_type = boost::histogram::histogram<
-    std::tuple<boost::histogram::axis::regular<float>, boost::histogram::axis::regular<float>,
-               boost::histogram::axis::regular<float>>,
-    boost::histogram::dense_storage<boost::histogram::accumulators::thread_safe<double>>>;
 
 namespace boost {
 namespace mpi {
@@ -73,10 +68,10 @@ int main(int argc, char *argv[]) {
   histogram_type numerator, denominator;
 
   if (world.rank() == 0) {
-    numerator = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(params.axes),
+    numerator = make_histogram_with(dense_storage<accumulator_type>(), std::get<0>(params.axes),
                                     std::get<1>(params.axes), std::get<2>(params.axes));
 
-    denominator = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(params.axes),
+    denominator = make_histogram_with(dense_storage<accumulator_type>(), std::get<0>(params.axes),
                                       std::get<1>(params.axes), std::get<2>(params.axes));
   }
 
@@ -90,11 +85,11 @@ int main(int argc, char *argv[]) {
   if (world.rank() == 0) {
     std::vector<double> num;
     for (auto &&x : indexed(numerator))
-      num.push_back(*x);
+      num.push_back(static_cast<double>(*x));
 
     std::vector<double> denom;
     for (auto &&x : indexed(denominator))
-      denom.push_back(*x);
+      denom.push_back(static_cast<double>(*x));
 
     std::ofstream out_strm("meow.txt");
     for (size_t i = 0; i < num.size(); ++i)

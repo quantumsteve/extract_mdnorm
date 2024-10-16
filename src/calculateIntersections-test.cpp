@@ -180,8 +180,8 @@ TEST_CASE("calculateIntersections") {
     REQUIRE(dims[0] == 372736);
     dataset.read(detIDs);
 
-    auto signal = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
-                                      std::get<1>(axes), std::get<2>(axes));
+    auto signal =
+        make_histogram_with(dense_storage<accumulator_type>(), std::get<0>(axes), std::get<1>(axes), std::get<2>(axes));
 
     std::vector<Eigen::Matrix3f> transforms;
     for (const Eigen::Matrix3f &op : symm) {

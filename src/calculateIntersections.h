@@ -1,18 +1,14 @@
 #pragma once
 
+#include "histogram.h"
+
 #include <Eigen/Core>
-#include <boost/histogram.hpp>
 
 #include <array>
 #include <vector>
 
 class MDNorm {
 public:
-  using histogram_type = boost::histogram::histogram<
-      std::tuple<boost::histogram::axis::regular<float>, boost::histogram::axis::regular<float>,
-                 boost::histogram::axis::regular<float>>,
-      boost::histogram::dense_storage<boost::histogram::accumulators::thread_safe<double>>>;
-
   MDNorm(const std::vector<float> &hX, const std::vector<float> &kX, const std::vector<float> &lX);
   /**
    * Calculate the points of intersection for the given detector with cuboid

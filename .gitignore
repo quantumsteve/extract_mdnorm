@@ -2,6 +2,7 @@
 # typical build directories and artifacts
 build
 /build*/
+data
 compile_commands.json
 
 # ignore vscode
