@@ -5,8 +5,8 @@
 #include "LoadSolidAngleWorkspace.h"
 #include "calcDiffractionIntersectionIntegral.h"
 #include "calculateIntersections.h"
+#include "histogram.h"
 
-#include <boost/histogram.hpp>
 #include <Eigen/Core>
 #include <highfive/highfive.hpp>
 
@@ -45,11 +45,11 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
 
   MDNorm doctest(hX, kX, lX);
 
-  signal = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(params.axes),
-                                    std::get<1>(params.axes), std::get<2>(params.axes));
-
-  h = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(params.axes), std::get<1>(params.axes),
+  signal = make_histogram_with(dense_storage<accumulator_type>(), std::get<0>(params.axes), std::get<1>(params.axes),
                                std::get<2>(params.axes));
+
+  h = make_histogram_with(dense_storage<accumulator_type>(), std::get<0>(params.axes), std::get<1>(params.axes),
+                          std::get<2>(params.axes));
 
   LoadSolidAngleWorkspace solidAngle(params.solidAngleFilename);
   const std::unordered_map<int32_t, size_t> solidAngDetToIdx = solidAngle.getSolidAngDetToIdx();

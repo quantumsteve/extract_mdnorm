@@ -4,10 +4,10 @@
 #include "LoadSolidAngleWorkspace.h"
 #include "calcDiffractionIntersectionIntegral.h"
 #include "calculateIntersections.h"
+#include "histogram.h"
 #include "validation_data_filepath.h"
 
 #include "catch2/catch_all.hpp"
-#include <boost/histogram.hpp>
 #include <highfive/highfive.hpp>
 
 #include <fstream>
@@ -78,8 +78,8 @@ TEST_CASE("calculateIntersections") {
     const std::vector<int> detIDs = eventWS.getDetIDs();
     const std::vector<std::array<double, 8>> events = eventWS.getEvents();
 
-    auto signal = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
-                                      std::get<1>(axes), std::get<2>(axes));
+    auto signal =
+        make_histogram_with(dense_storage<accumulator_type>(), std::get<0>(axes), std::get<1>(axes), std::get<2>(axes));
 
     std::vector<int> idx;
     std::vector<float> momentum;
@@ -158,8 +158,8 @@ TEST_CASE("calculateIntersections") {
     }
     REQUIRE_THAT(max_signal, Catch::Matchers::WithinAbs(ref_max, 2.e+04));*/
 
-    auto h = make_histogram_with(dense_storage<accumulators::thread_safe<double>>(), std::get<0>(axes),
-                                 std::get<1>(axes), std::get<2>(axes));
+    auto h =
+        make_histogram_with(dense_storage<accumulator_type>(), std::get<0>(axes), std::get<1>(axes), std::get<2>(axes));
 
     start = std::chrono::high_resolution_clock::now();
 
@@ -177,11 +177,11 @@ TEST_CASE("calculateIntersections") {
 
     std::vector<double> out;
     for (auto &&x : indexed(h))
-      out.push_back(*x);
+      out.push_back(static_cast<double>(*x));
 
     std::vector<double> meow;
     for (auto &&x : indexed(signal))
-      meow.push_back(*x);
+      meow.push_back(static_cast<double>(*x));
 
     std::ofstream out_strm("meow.txt");
     for (size_t i = 0; i < out.size(); ++i)
