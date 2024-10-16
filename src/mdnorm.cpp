@@ -29,22 +29,22 @@ public:
     }
   }
   void operator()(const Eigen::Matrix<float, 3, Eigen::Dynamic> &transforms,
-                  const Eigen::Matrix<float, Eigen::Dynamic, 8> &events, histogram_type &h) {
+                  const Eigen::Matrix<float, Eigen::Dynamic, 3> &events, histogram_type &h) {
     using boost::histogram::weight;
 #pragma omp parallel for
     for (Eigen::Index i = 0; i < events.rows() - simd_size; i += simd_size) {
-      vf = events.block<simd_size, 3>(i, 5) * transforms;
-      for (Eigen::Index k = 0; k < vf.cols(); k += 3) {
+      vf = events.block<simd_size, 3>(i, 0) * transforms;
+      for (Eigen::Index k = 0; k < vf.rows(); k += 3) {
         for (int j = 0; j < simd_size; ++j) {
-          h(vf(j, k), vf(j, k + 1), vf(j, k + 2), weight(events(i + j, 0)));
+          h(vf(j, k), vf(j, k + 1), vf(j, k + 2));//, weight(events(i + j, 0)));
         }
       }
     }
 #pragma omp parallel for
     for (Eigen::Index i = events.rows() - events.rows() % simd_size; i < events.rows(); ++i) {
-      vf2 = events.block<1, 3>(i, 5) * transforms;
-      for (Eigen::Index j = 0; j < vf2.cols(); j += 3) {
-        h(vf2[j], vf2[j + 1], vf2[j + 2], weight(events(i, 0)));
+      vf2 =  events.block<1, 3>(i, 0) * transforms;
+      for (Eigen::Index j = 0; j < cf2.cols(); j += 3) {
+        h(vf2[j], vf2[j + 1], vf2[j + 2]);//, weight(events(i, 0)));
       }
     }
   }
