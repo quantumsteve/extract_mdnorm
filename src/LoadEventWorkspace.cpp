@@ -117,3 +117,31 @@ void LoadEventWorkspace::updateEvents(Eigen::Matrix<float, 3, Eigen::Dynamic> &e
   auto dataset = group2.getDataSet("position");
   dataset.read(events);
 }
+
+void LoadEventWorkspace::updateBoxType(std::vector<int> &boxType) const {
+  HighFive::Group group = m_file.getGroup("MDEventWorkspace");
+  HighFive::Group group2 = group.getGroup("box_structure");
+  auto dataset = group2.getDataSet("box_type");
+  dataset.read(boxType);
+}
+
+void LoadEventWorkspace::updateExtents(Eigen::Matrix<double, Eigen::Dynamic, 6> &extents) const {
+  HighFive::Group group = m_file.getGroup("MDEventWorkspace");
+  HighFive::Group group2 = group.getGroup("box_structure");
+  auto dataset = group2.getDataSet("extents");
+  dataset.read(extents);
+}
+
+void LoadEventWorkspace::updateSignal(Eigen::Matrix<double, Eigen::Dynamic, 2> &signal) const {
+  HighFive::Group group = m_file.getGroup("MDEventWorkspace");
+  HighFive::Group group2 = group.getGroup("box_structure");
+  auto dataset = group2.getDataSet("box_signal_errorsquared");
+  dataset.read(signal);
+}
+
+void LoadEventWorkspace::updateEventIndex(Eigen::Matrix<uint64_t, Eigen::Dynamic, 2> &eventIndex) const {
+  HighFive::Group group = m_file.getGroup("MDEventWorkspace");
+  HighFive::Group group2 = group.getGroup("box_structure");
+  auto dataset = group2.getDataSet("box_event_index");
+  dataset.read(eventIndex);
+}
