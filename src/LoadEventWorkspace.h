@@ -26,6 +26,11 @@ public:
 
   std::vector<int> getDetIDs() const;
 
+  void updateBoxType(std::vector<int> &boxType) const;
+  void updateExtents(Eigen::Matrix<double, Eigen::Dynamic, 6> &extents) const;
+  void updateSignal(Eigen::Matrix<double, Eigen::Dynamic, 2> &signal) const;
+  void updateEventIndex(Eigen::Matrix<uint64_t, Eigen::Dynamic, 2> &eventIndex) const;
+
 private:
   HighFive::File m_file;
 };
