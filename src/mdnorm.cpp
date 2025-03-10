@@ -209,30 +209,31 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
     std::cout << " updateEvents time: " << duration_total << "s\n";
 
     startt = std::chrono::high_resolution_clock::now();
-    int64_t leafs{0}, moreBins{0}, singleBin{0};
+#pragma omp parallel for
     for (size_t i = 0; i < boxType.size(); ++i) {
       if (boxType[i] == 1 && boxEventIndex(i, 1) != 0) {
-        ++leafs;
+        Eigen::Vector3f vi(boxExtents(i, 0), boxExtents(i, 2), boxExtents(i, 4));
+        Eigen::Vector3f vi2(boxExtents(i, 1), boxExtents(i, 3), boxExtents(i, 5));
         for (const Eigen::Matrix3f &op : transforms2) {
-          Eigen::Vector3f vi(boxExtents(i, 0), boxExtents(i, 2), boxExtents(i, 4));
-          Eigen::Vector3f vf = op * vi;
-          auto hStartIdx = h.axis(0).index(vf[0]);
-          auto kStartIdx = h.axis(1).index(vf[1]);
-          auto lStartIdx = h.axis(2).index(vf[2]);
+          const Eigen::Vector3f vf = op * vi;
+          const Eigen::Vector3f vf2 = op * vi2;
 
-          vi = Eigen::Vector3f(boxExtents(i, 1), boxExtents(i, 3), boxExtents(i, 5));
-          vf = op * vi;
-          auto hEndIdx = h.axis(0).index(vf[0]);
-          auto kEndIdx = h.axis(1).index(vf[1]);
-          auto lEndIdx = h.axis(2).index(vf[2]);
-
-          if (hStartIdx == hEndIdx && kStartIdx == kEndIdx && lStartIdx == lEndIdx) {
-            ++singleBin;
+          Eigen::Vector3i startIdx;
+          bool singleBox = true;
+          for (int j = 0; j < 3; ++j) {
+            startIdx[j] = h.axis(j).index(vf[j]);
+            const auto endIdx = h.axis(j).index(vf2[j]);
+            if (startIdx[j] != endIdx) {
+              singleBox = false;
+              continue;
+            }
+          }
+          if (singleBox) {
             // h(vf[0], vf[1], vf[2], weight(boxSignal(i, 0)));
-            h.at(hStartIdx, kStartIdx, lStartIdx) += boxSignal(i, 0);
+            h.at(startIdx[0], startIdx[1], startIdx[2]) += boxSignal(i, 0);
           } else {
-            for (size_t j = boxEventIndex(i, 0); j < boxEventIndex(i, 0) + boxEventIndex(i, 1); ++j) {
-              ++moreBins;
+            const size_t end = boxEventIndex(i, 0) + boxEventIndex(i, 1);
+            for (size_t j = boxEventIndex(i, 0); j < end; ++j) {
               Eigen::Vector3f vff = op * events.block<1, 3>(j, 5).transpose();
               h(vff[0], vff[1], vff[2], weight(events(j, 0)));
             }
@@ -240,14 +241,8 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
         }
       }
     }
-    stopt = std::chrono::high_resolution_clock::now();
-    duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
-    std::cout << " BinMD time: " << duration_total << "s\n";
-    std::cout << "leafs: " << leafs << " of " << boxType.size() << std::endl;
-    std::cout << "singleBin? " << singleBin << " vs " << moreBins << std::endl;
 
-    /*startt = std::chrono::high_resolution_clock::now();
-    eventWS_changes.updateEvents(events);
+    /*eventWS_changes.updateEvents(events);
     stopt = std::chrono::high_resolution_clock::now();
     duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
     std::cout << " updateEvents time: " << duration_total << "s\n";
@@ -256,6 +251,6 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
     binMD(transforms3, events, h);
     stopt = std::chrono::high_resolution_clock::now();
     duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
-    std::cout << " BinMD time: " << duration_total << "s\n";*/
+    std::cout << " BinMD time: " << duration_total << "s\n";
   }
 }
