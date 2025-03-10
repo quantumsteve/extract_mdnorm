@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
 
   parameters params;
   params.axes =
-      std::tuple<reg, reg, reg>{reg(603, -16.0, 16.0, "x"), reg(603, -16.0, 16.0, "y"), reg(1, -0.1, 0.1, "z")};
+      std::tuple<reg, reg, reg>{reg(201, -16.0, 16.0, "x"), reg(201, -16.0, 16.0, "y"), reg(1, -0.1, 0.1, "z")};
   params.W << 1.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 1.f;
   params.solidAngleFilename = BIXBYITE_SA_NXS;
   params.fluxFilename = BIXBYITE_FLUX_NXS;
