@@ -17,47 +17,23 @@
 #include <tuple>
 #include <vector>
 
-class BinMD {
-public:
-  static constexpr int simd_size = 8;
-  BinMD(Eigen::Index cols) {
-    std::cout << cols << "\n";
-#pragma omp parallel
-    {
-      vf.resize(simd_size, cols);
-      vf2.resize(1, cols);
+void binMD(const Eigen::Matrix<float, 3, 3> &transforms, const Eigen::Matrix<float, Eigen::Dynamic, 8> &events,
+           histogram_type &h) {
+  using boost::histogram::weight;
+  constexpr int simd_size = 8;
+#pragma omp parallel for
+  for (Eigen::Index i = 0; i < events.rows() - simd_size; i += simd_size) {
+    Eigen::Matrix<float, simd_size, 3> vf = events.block<simd_size, 3>(i, 5) * transforms;
+    for (int j = 0; j < simd_size; ++j) {
+      h(vf(0, j), vf(1, j), vf(2, j), weight(events(i + j, 0)));
     }
   }
-  void operator()(const Eigen::Matrix<float, 3, Eigen::Dynamic> &transforms,
-                  const Eigen::Matrix<float, Eigen::Dynamic, 3> &events, histogram_type &h) {
-    using boost::histogram::weight;
 #pragma omp parallel for
-    for (Eigen::Index i = 0; i < events.rows() - simd_size; i += simd_size) {
-      vf = events.block<simd_size, 3>(i, 0) * transforms;
-      for (Eigen::Index k = 0; k < vf.rows(); k += 3) {
-        for (int j = 0; j < simd_size; ++j) {
-          h(vf(j, k), vf(j, k + 1), vf(j, k + 2));//, weight(events(i + j, 0)));
-        }
-      }
-    }
-#pragma omp parallel for
-    for (Eigen::Index i = events.rows() - events.rows() % simd_size; i < events.rows(); ++i) {
-      vf2 =  events.block<1, 3>(i, 0) * transforms;
-      for (Eigen::Index j = 0; j < cf2.cols(); j += 3) {
-        h(vf2[j], vf2[j + 1], vf2[j + 2]);//, weight(events(i, 0)));
-      }
-    }
+  for (Eigen::Index i = events.rows() - events.rows() % simd_size; i < events.rows(); ++i) {
+    Eigen::Matrix<float, 3, 1> vf = transforms * events.block<1, 3>(i, 5) * transforms;
+    h(vf[0], vf[1], vf[2], weight(events(i, 0)));
   }
-
-private:
-  static Eigen::Matrix<float, simd_size, Eigen::Dynamic> vf;
-#pragma omp threadprivate(vf)
-  static Eigen::Matrix<float, 1, Eigen::Dynamic> vf2;
-#pragma omp threadprivate(vf2)
-};
-
-Eigen::Matrix<float, BinMD::simd_size, Eigen::Dynamic> BinMD::vf;
-Eigen::Matrix<float, 1, Eigen::Dynamic> BinMD::vf2;
+}
 
 void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
   using namespace boost::histogram;
@@ -130,7 +106,6 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
   for (size_t i = 0; i < transforms2.size(); ++i) {
     transforms3.block<3, 3>(0, i * 3) = transforms2[i].transpose();
   }
-  BinMD binMD(transforms3.cols());
 
   std::vector<int> idx;
   std::vector<float> momentum;
@@ -225,30 +200,17 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
             const auto endIdx = h.axis(j).index(vf2[j]);
             if (startIdx[j] != endIdx) {
               singleBox = false;
-              continue;
+              break;
             }
           }
           if (singleBox) {
-            // h(vf[0], vf[1], vf[2], weight(boxSignal(i, 0)));
             h.at(startIdx[0], startIdx[1], startIdx[2]) += boxSignal(i, 0);
           } else {
-            const size_t end = boxEventIndex(i, 0) + boxEventIndex(i, 1);
-            for (size_t j = boxEventIndex(i, 0); j < end; ++j) {
-              Eigen::Vector3f vff = op * events.block<1, 3>(j, 5).transpose();
-              h(vff[0], vff[1], vff[2], weight(events(j, 0)));
-            }
+            binMD(op.transpose(), events.block(boxEventIndex(i, 0), 0, boxEventIndex(i, 1), 8), h);
           }
         }
       }
     }
-
-    /*eventWS_changes.updateEvents(events);
-    stopt = std::chrono::high_resolution_clock::now();
-    duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
-    std::cout << " updateEvents time: " << duration_total << "s\n";
-
-    startt = std::chrono::high_resolution_clock::now();
-    binMD(transforms3, events, h);
     stopt = std::chrono::high_resolution_clock::now();
     duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
     std::cout << " BinMD time: " << duration_total << "s\n";
