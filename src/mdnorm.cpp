@@ -82,6 +82,11 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
     transforms2.push_back(transform.inverse());
   }
 
+  Eigen::Matrix<float, Eigen::Dynamic, 3> transforms3(symm.size() * 3, 3);
+  for (size_t i = 0; i < transforms2.size(); ++i) {
+    transforms3.block<3, 3>(i * 3, 0) = transforms2[i];
+  }
+
   std::vector<int> idx;
   std::vector<float> momentum;
   std::vector<Eigen::Vector3f> intersections;
@@ -151,23 +156,20 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
 
     startt = std::chrono::high_resolution_clock::now();
     constexpr int simd_size = 8;
-    typedef Eigen::Matrix<float, simd_size, 3, Eigen::AutoAlign> SIMDVector3f;
 #pragma omp parallel for
     for (int64_t i = 0; i < events.rows() - simd_size; i += simd_size) {
-      SIMDVector3f vf;
-      const auto &vi =events.block<simd_size, 3>(i, 5).transpose();
-      for (const Eigen::Matrix3f &op : transforms2) {
-        vf.transpose().noalias() = op * vi;
-        for (int j = 0; j < simd_size; ++j) {
-          h(vf(j, 0), vf(j, 1), vf(j, 2), weight(events(i + j, 0)));
+      Eigen::Matrix<float, Eigen::Dynamic, simd_size> vf = transforms3 * events.block<simd_size, 3>(i, 5).transpose();
+      for (int j = 0; j < simd_size; ++j) {
+        for (int k = 0; k < vf.rows(); k += 3) {
+          h(vf(k, j), vf(k + 1, j), vf(k + 2, j), weight(events(i + j, 0)));
         }
       }
     }
-#pragma omp parallel for collapse(2)
+#pragma omp parallel for
     for (int64_t i = events.rows() - events.rows() % simd_size; i < events.rows(); ++i) {
-      for (const Eigen::Matrix3f &op : transforms2) {
-        Eigen::Vector3f vf = op * events.block<1, 3>(i, 5).transpose();
-        h(vf[0], vf[1], vf[2], weight(events(i, 0)));
+      Eigen::Matrix<float, 1, Eigen::Dynamic> vf = transforms3 * events.block<1, 3>(i, 5).transpose();
+      for (Eigen::Index j = 0; j < transforms3.rows(); j += 3) {
+        h(vf[j], vf[j + 1], vf[j + 2], weight(events(i, 0)));
       }
     }
     stopt = std::chrono::high_resolution_clock::now();
