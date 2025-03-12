@@ -187,17 +187,15 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
 #pragma omp parallel for
     for (size_t i = 0; i < boxType.size(); ++i) {
       if (boxType[i] == 1 && boxEventIndex(i, 1) != 0) {
-        Eigen::Vector3f vi(boxExtents(i, 0), boxExtents(i, 2), boxExtents(i, 4));
-        Eigen::Vector3f vi2(boxExtents(i, 1), boxExtents(i, 3), boxExtents(i, 5));
+        Eigen::Matrix<float, 3, 2> vi;
+        const auto vf = transforms3 * vi;
+        int k = 0;
         for (const Eigen::Matrix3f &op : transforms2) {
-          const Eigen::Vector3f vf = op * vi;
-          const Eigen::Vector3f vf2 = op * vi2;
-
           Eigen::Vector3i startIdx;
           bool singleBox = true;
           for (int j = 0; j < 3; ++j) {
-            startIdx[j] = h.axis(j).index(vf[j]);
-            const auto endIdx = h.axis(j).index(vf2[j]);
+            startIdx[j] = h.axis(j).index(vf(k + j, 0));
+            const auto endIdx = h.axis(j).index(vf(k + j, 1));
             if (startIdx[j] != endIdx) {
               singleBox = false;
               break;
@@ -208,6 +206,7 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
           } else {
             binMD(op.transpose(), events.block(boxEventIndex(i, 0), 0, boxEventIndex(i, 1), 8), h);
           }
+          k += 3;
         }
       }
     }
