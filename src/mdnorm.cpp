@@ -21,14 +21,12 @@ void binMD(const Eigen::Matrix<float, 3, 3> &transforms, const Eigen::Matrix<flo
            histogram_type &h) {
   using boost::histogram::weight;
   constexpr int simd_size = 8;
-#pragma omp parallel for
   for (Eigen::Index i = 0; i < events.rows() - simd_size; i += simd_size) {
     Eigen::Matrix<float, simd_size, 3> vf = events.block<simd_size, 3>(i, 5) * transforms;
     for (int j = 0; j < simd_size; ++j) {
       h(vf(0, j), vf(1, j), vf(2, j), weight(events(i + j, 0)));
     }
   }
-#pragma omp parallel for
   for (Eigen::Index i = events.rows() - events.rows() % simd_size; i < events.rows(); ++i) {
     Eigen::Matrix<float, 3, 1> vf = transforms * events.block<1, 3>(i, 5) * transforms;
     h(vf[0], vf[1], vf[2], weight(events(i, 0)));
@@ -184,10 +182,14 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
     std::cout << " updateEvents time: " << duration_total << "s\n";
 
     startt = std::chrono::high_resolution_clock::now();
-#pragma omp parallel for
+    int64_t used{0};
+#pragma omp parallel for reduction(+ : used) // private(boxType, boxEventIndex, boxExtents, h, events)
     for (size_t i = 0; i < boxType.size(); ++i) {
       if (boxType[i] == 1 && boxEventIndex(i, 1) != 0) {
+        ++used;
         Eigen::Matrix<float, 3, 2> vi;
+        vi << boxExtents(i, 0), boxExtents(i, 1), boxExtents(i, 2), boxExtents(i, 3), boxExtents(i, 4),
+            boxExtents(i, 5);
         const auto vf = transforms3 * vi;
         int k = 0;
         for (const Eigen::Matrix3f &op : transforms2) {
@@ -213,5 +215,6 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
     stopt = std::chrono::high_resolution_clock::now();
     duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
     std::cout << " BinMD time: " << duration_total << "s\n";
+    std::cout << " Used " << used << " of " << boxType.size() << std::endl;
   }
 }
