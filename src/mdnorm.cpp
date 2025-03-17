@@ -16,29 +16,46 @@
 #include <tuple>
 #include <vector>
 
-void binMD(const Eigen::Matrix<float, Eigen::Dynamic, 3> &transforms,
-           const Eigen::Matrix<float, Eigen::Dynamic, 8> &events, histogram_type &h) {
-  using boost::histogram::weight;
-  constexpr int simd_size = 8;
-  static Eigen::Matrix<float, Eigen::Dynamic, simd_size> vf(transforms.rows(), simd_size);
-#pragma omp parallel for private(vf)
-  for (Eigen::Index i = 0; i < events.rows() - simd_size; i += simd_size) {
-    vf = transforms * events.block<simd_size, 3>(i, 5).transpose();
-    for (int j = 0; j < simd_size; ++j) {
-      for (Eigen::Index k = 0; k < vf.rows(); k += 3) {
-        h(vf(k, j), vf(k + 1, j), vf(k + 2, j), weight(events(i + j, 0)));
+class BinMD {
+public:
+  static constexpr int simd_size = 8;
+  BinMD(Eigen::Index rows) {
+#pragma omp parallel
+    {
+      vf.resize(rows, simd_size);
+      vf2.resize(rows, 1);
+    }
+  }
+  void operator()(const Eigen::Matrix<float, Eigen::Dynamic, 3> &transforms,
+                  const Eigen::Matrix<float, Eigen::Dynamic, 8> &events, histogram_type &h) {
+    using boost::histogram::weight;
+#pragma omp parallel for
+    for (Eigen::Index i = 0; i < events.rows() - simd_size; i += simd_size) {
+      vf = transforms * events.block<simd_size, 3>(i, 5).transpose();
+      for (int j = 0; j < simd_size; ++j) {
+        for (Eigen::Index k = 0; k < vf.rows(); k += 3) {
+          h(vf(k, j), vf(k + 1, j), vf(k + 2, j), weight(events(i + j, 0)));
+        }
+      }
+    }
+#pragma omp parallel for
+    for (Eigen::Index i = events.rows() - events.rows() % simd_size; i < events.rows(); ++i) {
+      vf2 = transforms * events.block<1, 3>(i, 5).transpose();
+      for (Eigen::Index j = 0; j < transforms.rows(); j += 3) {
+        h(vf2[j], vf2[j + 1], vf2[j + 2], weight(events(i, 0)));
       }
     }
   }
-  static Eigen::Matrix<float, Eigen::Dynamic, 1> vf2(transforms.rows(), 1);
-#pragma omp parallel for private(vf2)
-  for (Eigen::Index i = events.rows() - events.rows() % simd_size; i < events.rows(); ++i) {
-    vf2 = transforms * events.block<1, 3>(i, 5).transpose();
-    for (Eigen::Index j = 0; j < transforms.rows(); j += 3) {
-      h(vf2[j], vf2[j + 1], vf2[j + 2], weight(events(i, 0)));
-    }
-  }
-}
+
+private:
+  static Eigen::Matrix<float, Eigen::Dynamic, simd_size> vf;
+#pragma omp threadprivate(vf)
+  static Eigen::Matrix<float, Eigen::Dynamic, 1> vf2;
+#pragma omp threadprivate(vf2)
+};
+
+Eigen::Matrix<float, Eigen::Dynamic, BinMD::simd_size> BinMD::vf;
+Eigen::Matrix<float, Eigen::Dynamic, 1> BinMD::vf2;
 
 void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
   using namespace boost::histogram;
@@ -110,6 +127,7 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
   for (size_t i = 0; i < transforms2.size(); ++i) {
     transforms3.block<3, 3>(i * 3, 0) = transforms2[i];
   }
+  BinMD binMD(transforms3.rows());
 
   std::vector<int> idx;
   std::vector<float> momentum;
