@@ -183,7 +183,7 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
 
     startt = std::chrono::high_resolution_clock::now();
     int64_t used{0};
-#pragma omp parallel for reduction(+ : used) // private(boxType, boxEventIndex, boxExtents, h, events)
+#pragma omp parallel for reduction(+ : used)
     for (size_t i = 0; i < boxType.size(); ++i) {
       if (boxType[i] == 1 && boxEventIndex(i, 1) != 0) {
         ++used;
