@@ -67,9 +67,6 @@ int main(int argc, char *argv[]) {
   parameters params;
   params.axes = std::tuple<reg, reg, reg>{reg(binStop - binStart + 1, valStart, valStop, "x"),
                                           reg(603, -16.0, 16.0, "y"), reg(1, -0.1, 0.1, "z")};
-
-  params.axes = std::tuple<reg, reg, reg>{reg(603, -7.5375, 7.5375, "x"), reg(603, -13.16524, 13.16524, "y"),
-                                          reg(1, -0.5, 0.5, "z")};
   params.W << 1.f, 1.f, 0.f, 1.f, -1.f, 0.f, 0.f, 0.f, 1.f;
   params.solidAngleFilename = BENZIL_SA_NXS;
   params.fluxFilename = BENZIL_FLUX_NXS;
