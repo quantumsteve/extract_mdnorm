@@ -17,20 +17,19 @@
 #include <tuple>
 #include <vector>
 
-class BinMD {
-public:
-  static constexpr int simd_size = 8;
-  BinMD(Eigen::Index rows) {
-#pragma omp parallel
-    {
-      vf.resize(rows, simd_size);
-      vf2.resize(rows, 1);
+void binMD(const Eigen::Matrix<float, 3, 3> &transforms, const Eigen::Matrix<float, Eigen::Dynamic, 8> &events,
+           histogram_type &h) {
+  using boost::histogram::weight;
+  constexpr int simd_size = 8;
+  for (Eigen::Index i = 0; i < events.rows() - simd_size; i += simd_size) {
+    Eigen::Matrix<float, 3, simd_size> vf = transforms * events.block<simd_size, 3>(i, 5).transpose();
+    for (int j = 0; j < simd_size; ++j) {
+      h(vf(0, j), vf(1, j), vf(2, j), weight(events(i + j, 0)));
     }
   }
   void operator()(const Eigen::Matrix<float, Eigen::Dynamic, 3> &transforms,
                   const Eigen::Matrix<float, Eigen::Dynamic, 3> &events, histogram_type &h) {
     using boost::histogram::weight;
-#pragma omp parallel for
     for (Eigen::Index i = 0; i < events.rows() - simd_size; i += simd_size) {
       vf = transforms * events.block<simd_size, 3>(i, 0).transpose();
       for (int j = 0; j < simd_size; ++j) {
@@ -39,7 +38,6 @@ public:
         }
       }
     }
-#pragma omp parallel for
     for (Eigen::Index i = events.rows() - events.rows() % simd_size; i < events.rows(); ++i) {
       vf2 = transforms * events.block<1, 3>(i, 0).transpose();
       for (Eigen::Index j = 0; j < transforms.rows(); j += 3) {
@@ -47,16 +45,7 @@ public:
       }
     }
   }
-
-private:
-  static Eigen::Matrix<float, Eigen::Dynamic, simd_size> vf;
-#pragma omp threadprivate(vf)
-  static Eigen::Matrix<float, Eigen::Dynamic, 1> vf2;
-#pragma omp threadprivate(vf2)
-};
-
-Eigen::Matrix<float, Eigen::Dynamic, BinMD::simd_size> BinMD::vf;
-Eigen::Matrix<float, Eigen::Dynamic, 1> BinMD::vf2;
+}
 
 void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
   using namespace boost::histogram;
@@ -105,6 +94,7 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
 
   auto rot_filename = std::string(params.eventPrefix).append(std::to_string(params.eventMin)).append("_extra_params.hdf5");
   LoadExtrasWorkspace extras(rot_filename);
+  // const std::vector<Eigen::Matrix3f> symm = {Eigen::Matrix3f::Identity()};
   const std::vector<Eigen::Matrix3f> symm = extras.getSymmMatrices();
   const Eigen::Matrix3f m_UB = extras.getUBMatrix();
   const std::vector<bool> skip_dets = extras.getSkipDets();
@@ -128,7 +118,6 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
   for (size_t i = 0; i < transforms2.size(); ++i) {
     transforms3.block<3, 3>(i * 3, 0) = transforms2[i];
   }
-  BinMD binMD(transforms3.rows());
 
   std::vector<int> idx;
   std::vector<float> momentum;
@@ -137,6 +126,10 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
   std::vector<double> yValues;
   std::vector<Eigen::Matrix3f> transforms;
   Eigen::Matrix<float, Eigen::Dynamic, 3> events;
+  std::vector<int> boxType;
+  Eigen::Matrix<double, Eigen::Dynamic, 6> boxExtents;
+  Eigen::Matrix<double, Eigen::Dynamic, 2> boxSignal;
+  Eigen::Matrix<uint64_t, Eigen::Dynamic, 2> boxEventIndex;
 
   std::cout << params.eventStart << " " <<params.eventStop << std::endl;
   for (int file_num = params.eventMin + params.eventStart; file_num <= params.eventMin + params.eventStop; ++file_num) {
@@ -193,14 +186,48 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
 
     startt = std::chrono::high_resolution_clock::now();
     eventWS_changes.updateEvents(events);
+    eventWS_changes.updateBoxType(boxType);
+    eventWS_changes.updateExtents(boxExtents);
+    eventWS_changes.updateSignal(boxSignal);
+    eventWS_changes.updateEventIndex(boxEventIndex);
     stopt = std::chrono::high_resolution_clock::now();
     duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
     std::cout << " updateEvents time: " << duration_total << "s\n";
 
     startt = std::chrono::high_resolution_clock::now();
-    binMD(transforms3, events, h);
+    int64_t used{0};
+#pragma omp parallel for reduction(+ : used)
+    for (size_t i = 0; i < boxType.size(); ++i) {
+      if (boxType[i] == 1 && boxEventIndex(i, 1) != 0) {
+        ++used;
+        Eigen::Matrix<float, 3, 2> vi;
+        vi << boxExtents(i, 0), boxExtents(i, 1), boxExtents(i, 2), boxExtents(i, 3), boxExtents(i, 4),
+            boxExtents(i, 5);
+        const auto vf = transforms3 * vi;
+        int k = 0;
+        for (const Eigen::Matrix3f &op : transforms2) {
+          Eigen::Vector3i startIdx;
+          bool singleBox = true;
+          for (int j = 0; j < 3; ++j) {
+            startIdx[j] = h.axis(j).index(vf(k + j, 0));
+            const auto endIdx = h.axis(j).index(vf(k + j, 1));
+            if (startIdx[j] != endIdx) {
+              singleBox = false;
+              break;
+            }
+          }
+          if (singleBox) {
+            h.at(startIdx[0], startIdx[1], startIdx[2]) += boxSignal(i, 0);
+          } else {
+            binMD(op, events.block(boxEventIndex(i, 0), 0, boxEventIndex(i, 1), 8), h);
+          }
+          k += 3;
+        }
+      }
+    }
     stopt = std::chrono::high_resolution_clock::now();
     duration_total = std::chrono::duration<double, std::chrono::seconds::period>(stopt - startt).count();
     std::cout << " BinMD time: " << duration_total << "s\n";
+    std::cout << " Used " << used << " of " << boxType.size() << std::endl;
   }
 }
