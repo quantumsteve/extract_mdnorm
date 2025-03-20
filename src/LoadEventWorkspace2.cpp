@@ -35,3 +35,66 @@ void LoadEventWorkspace2::updateEvents(Eigen::Matrix<float, Eigen::Dynamic, 3> &
   status = H5Sclose(dataspace);
 }
 
+void LoadEventWorkspace2::updateBoxType(std::vector<unsigned char> &boxType) const {
+  const char *DATASET = "MDEventWorkspace/box_structure/box_type";
+  hid_t dataset = H5Dopen(m_file, DATASET, H5P_DEFAULT);
+
+  hid_t dataspace = H5Dget_space(dataset);
+  hsize_t rank = H5Sget_simple_extent_ndims(dataspace);
+  std::array<hsize_t, 1> dims_out;
+  auto status = H5Sget_simple_extent_dims(dataspace, dims_out.data(), nullptr);
+
+  boxType.resize(dims_out[0]);
+  status = H5Dread(dataset, H5T_NATIVE_UCHAR, H5S_ALL, H5S_ALL, H5P_DEFAULT, boxType.data());
+
+  status = H5Dclose(dataset);
+  status = H5Sclose(dataspace);
+}
+
+void LoadEventWorkspace2::updateExtents(Eigen::Matrix<float, Eigen::Dynamic, 6> &extents) const {
+  const char *DATASET = "MDEventWorkspace/box_structure/extents";
+  hid_t dataset = H5Dopen(m_file, DATASET, H5P_DEFAULT);
+
+  hid_t dataspace = H5Dget_space(dataset);
+  hsize_t rank = H5Sget_simple_extent_ndims(dataspace);
+  std::array<hsize_t, 2> dims_out;
+  auto status = H5Sget_simple_extent_dims(dataspace, dims_out.data(), nullptr);
+
+  extents.resize(dims_out[1], dims_out[0]);
+  status = H5Dread(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, extents.data());
+
+  status = H5Dclose(dataset);
+  status = H5Sclose(dataspace);
+}
+
+void LoadEventWorkspace2::updateSignal(std::vector<float> &signal) const {
+  const char *DATASET = "MDEventWorkspace/box_structure/box_signal";
+  hid_t dataset = H5Dopen(m_file, DATASET, H5P_DEFAULT);
+
+  hid_t dataspace = H5Dget_space(dataset);
+  hsize_t rank = H5Sget_simple_extent_ndims(dataspace);
+  std::array<hsize_t, 1> dims_out;
+  auto status = H5Sget_simple_extent_dims(dataspace, dims_out.data(), nullptr);
+
+  signal.resize(dims_out[0]);
+  status = H5Dread(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, signal.data());
+
+  status = H5Dclose(dataset);
+  status = H5Sclose(dataspace);
+}
+
+void LoadEventWorkspace2::updateEventIndex(Eigen::Matrix<uint64_t, Eigen::Dynamic, 2> &eventIndex) const {
+  const char *DATASET = "MDEventWorkspace/box_structure/box_event_index";
+  hid_t dataset = H5Dopen(m_file, DATASET, H5P_DEFAULT);
+
+  hid_t dataspace = H5Dget_space(dataset);
+  hsize_t rank = H5Sget_simple_extent_ndims(dataspace);
+  std::array<hsize_t, 2> dims_out;
+  auto status = H5Sget_simple_extent_dims(dataspace, dims_out.data(), nullptr);
+
+  eventIndex.resize(dims_out[1], dims_out[0]);
+  status = H5Dread(dataset, H5T_STD_U64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, eventIndex.data());
+
+  status = H5Dclose(dataset);
+  status = H5Sclose(dataspace);
+}
