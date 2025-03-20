@@ -17,19 +17,19 @@
 #include <tuple>
 #include <vector>
 
-void binMD(const Eigen::Matrix<float, 3, 3> &transforms, const Eigen::Matrix<float, Eigen::Dynamic, 8> &events,
+void binMD(const Eigen::Matrix<float, 3, 3> &transforms, const Eigen::Matrix<float, Eigen::Dynamic, 3> &events,
            histogram_type &h) {
   using boost::histogram::weight;
   constexpr int simd_size = 8;
   for (Eigen::Index i = 0; i < events.rows() - simd_size; i += simd_size) {
     Eigen::Matrix<float, simd_size, 3> vf = events.block<simd_size, 3>(i, 5) * transforms;
     for (int j = 0; j < simd_size; ++j) {
-      h(vf(0, j), vf(1, j), vf(2, j), weight(events(i + j, 0)));
+      h(vf(0, j), vf(1, j), vf(2, j)); //, weight(events(i + j, 0)));
     }
   }
   for (Eigen::Index i = events.rows() - events.rows() % simd_size; i < events.rows(); ++i) {
     Eigen::Matrix<float, 3, 1> vf = transforms * events.block<1, 3>(i, 5) * transforms;
-    h(vf[0], vf[1], vf[2], weight(events(i, 0)));
+    h(vf[0], vf[1], vf[2]); //, weight(events(i, 0)));
   }
 }
 
@@ -112,9 +112,9 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
   std::vector<double> yValues;
   std::vector<Eigen::Matrix3f> transforms;
   Eigen::Matrix<float, Eigen::Dynamic, 3> events;
-  std::vector<int> boxType;
-  Eigen::Matrix<double, Eigen::Dynamic, 6> boxExtents;
-  Eigen::Matrix<double, Eigen::Dynamic, 2> boxSignal;
+  std::vector<unsigned char> boxType;
+  Eigen::Matrix<float, Eigen::Dynamic, 6> boxExtents;
+  std::vector<float> boxSignal;
   Eigen::Matrix<uint64_t, Eigen::Dynamic, 2> boxEventIndex;
 
 
@@ -204,9 +204,9 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
             }
           }
           if (singleBox) {
-            h.at(startIdx[0], startIdx[1], startIdx[2]) += boxSignal(i, 0);
+            h.at(startIdx[0], startIdx[1], startIdx[2]) += boxSignal[i];
           } else {
-            binMD(op.transpose(), events.block(boxEventIndex(i, 0), 0, boxEventIndex(i, 1), 8), h);
+            binMD(op.transpose(), events.block(boxEventIndex(i, 0), 0, boxEventIndex(i, 1), 3), h);
           }
           k += 3;
         }
