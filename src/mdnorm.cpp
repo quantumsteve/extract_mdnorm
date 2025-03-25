@@ -185,7 +185,7 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
     int64_t used{0};
 #pragma omp parallel for reduction(+ : used)
     for (size_t i = 0; i < boxType.size(); ++i) {
-      if (boxType[i] == 1 && boxEventIndex(i, 1) != 0) {
+      if (boxType[i] == static_cast<unsigned char>(1) && boxEventIndex(i, 1) != 0) {
         ++used;
         Eigen::Matrix<float, 3, 2> vi;
         vi << boxExtents(i, 0), boxExtents(i, 1), boxExtents(i, 2), boxExtents(i, 3), boxExtents(i, 4),
