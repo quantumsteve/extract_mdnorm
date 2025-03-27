@@ -22,13 +22,13 @@ void binMD(const Eigen::Matrix<float, 3, 3> &transforms, const Eigen::Matrix<flo
   using boost::histogram::weight;
   constexpr int simd_size = 8;
   for (Eigen::Index i = 0; i < events.rows() - simd_size; i += simd_size) {
-    Eigen::Matrix<float, simd_size, 3> vf = events.block<simd_size, 3>(i, 5) * transforms;
+    Eigen::Matrix<float, simd_size, 3> vf = events.block<simd_size, 3>(i, 0) * transforms;
     for (int j = 0; j < simd_size; ++j) {
-      h(vf(0, j), vf(1, j), vf(2, j)); //, weight(events(i + j, 0)));
+      h(vf(j, 0), vf(j, 1), vf(j, 2)); //, weight(events(i + j, 0)));
     }
   }
   for (Eigen::Index i = events.rows() - events.rows() % simd_size; i < events.rows(); ++i) {
-    Eigen::Matrix<float, 3, 1> vf = transforms * events.block<1, 3>(i, 5) * transforms;
+    Eigen::Matrix<float, 1, 3> vf = events.block<1, 3>(i, 0) * transforms;
     h(vf[0], vf[1], vf[2]); //, weight(events(i, 0)));
   }
 }
@@ -97,12 +97,12 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
   std::vector<Eigen::Matrix3f> transforms2;
   for (const Eigen::Matrix3f &op : symm) {
     Eigen::Matrix3f transform = m_UB * op * params.W;
-    transforms2.push_back(transform.inverse());
+    transforms2.push_back(transform.inverse().transpose());
   }
 
   Eigen::Matrix<float, 3, Eigen::Dynamic> transforms3(3, symm.size() * 3);
   for (size_t i = 0; i < transforms2.size(); ++i) {
-    transforms3.block<3, 3>(0, i * 3) = transforms2[i].transpose();
+    transforms3.block<3, 3>(0, i * 3) = transforms2[i];
   }
 
   std::vector<int> idx;
@@ -187,17 +187,17 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
     for (size_t i = 0; i < boxType.size(); ++i) {
       if (boxType[i] == static_cast<unsigned char>(1) && boxEventIndex(i, 1) != 0) {
         ++used;
-        Eigen::Matrix<float, 3, 2> vi;
+        Eigen::Matrix<float, 2, 3> vi;
         vi << boxExtents(i, 0), boxExtents(i, 1), boxExtents(i, 2), boxExtents(i, 3), boxExtents(i, 4),
             boxExtents(i, 5);
-        const auto vf = transforms3 * vi;
+        const auto vf = vi * transforms3;
         int k = 0;
         for (const Eigen::Matrix3f &op : transforms2) {
           Eigen::Vector3i startIdx;
           bool singleBox = true;
           for (int j = 0; j < 3; ++j) {
-            startIdx[j] = h.axis(j).index(vf(k + j, 0));
-            const auto endIdx = h.axis(j).index(vf(k + j, 1));
+            startIdx[j] = h.axis(j).index(vf(0, k + j));
+            const auto endIdx = h.axis(j).index(vf(1, k + j));
             if (startIdx[j] != endIdx) {
               singleBox = false;
               break;
@@ -206,7 +206,7 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
           if (singleBox) {
             h.at(startIdx[0], startIdx[1], startIdx[2]) += boxSignal[i];
           } else {
-            binMD(op.transpose(), events.block(boxEventIndex(i, 0), 0, boxEventIndex(i, 1), 3), h);
+            binMD(op, events.block(boxEventIndex(i, 0), 0, boxEventIndex(i, 1), 3), h);
           }
           k += 3;
         }

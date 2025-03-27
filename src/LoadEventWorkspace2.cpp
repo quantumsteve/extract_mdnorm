@@ -6,16 +6,14 @@ LoadEventWorkspace2::LoadEventWorkspace2(const std::string &filename) {
   m_file = H5Fopen(filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 }
 
-LoadEventWorkspace2::~LoadEventWorkspace2() {
-  H5Fclose(m_file);
-}
+LoadEventWorkspace2::~LoadEventWorkspace2() { H5Fclose(m_file); }
 
 double LoadEventWorkspace2::getProtonCharge() const {
-  const char *DATASET = "MDEventWorkspace/experiment0/logs/gd_prtn_chrg/value";	
+  const char *DATASET = "MDEventWorkspace/experiment0/logs/gd_prtn_chrg/value";
   hid_t dset = H5Dopen(m_file, DATASET, H5P_DEFAULT);
-  double protonCharge; 
-  auto status = H5Dread (dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &protonCharge);
-  status = H5Dclose (dset);
+  double protonCharge;
+  auto status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &protonCharge);
+  status = H5Dclose(dset);
   return protonCharge;
 }
 
@@ -25,7 +23,7 @@ void LoadEventWorkspace2::updateEvents(Eigen::Matrix<float, Eigen::Dynamic, 3> &
 
   hid_t dataspace = H5Dget_space(dataset);
   hsize_t rank = H5Sget_simple_extent_ndims(dataspace);
-  std::array<hsize_t,  2> dims_out;
+  std::array<hsize_t, 2> dims_out;
   auto status = H5Sget_simple_extent_dims(dataspace, dims_out.data(), nullptr);
 
   events.resize(dims_out[1], dims_out[0]);
