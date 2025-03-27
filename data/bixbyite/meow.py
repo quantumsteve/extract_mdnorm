@@ -24,8 +24,7 @@ for run in range(40704,40726):
   extent_data = f['MDEventWorkspace']['box_structure']['extents']
   print(extent_data.shape, extent_data.dtype)
   #grp = g.create_group('MDEventWorkspace/box_structure');
-  extents = grp.create_dataset("extents", (6, extent_data.shape[0]), dtype='float32')
-  extents = np.transpose(extent_data)
+  extents = grp.create_dataset("extents", (6, extent_data.shape[0]), dtype='float32', data=np.transpose(extent_data))
 
   signal_data = f['MDEventWorkspace']['box_structure']['box_signal_errorsquared']
   print(signal_data.shape, signal_data.dtype)
