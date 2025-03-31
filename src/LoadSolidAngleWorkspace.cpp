@@ -9,10 +9,7 @@ std::vector<std::vector<double>> LoadSolidAngleWorkspace::getSolidAngleValues() 
   HighFive::Group group2 = group.getGroup("workspace");
   HighFive::DataSet dataset = group2.getDataSet("values");
   std::vector<size_t> dims = dataset.getDimensions();
-  std::vector<double> read_data;
-  dataset.read(read_data);
-  for (const double value : read_data)
-    solidAngleWS.push_back({value});
+  dataset.read(solidAngleWS);
   return solidAngleWS;
 }
 
