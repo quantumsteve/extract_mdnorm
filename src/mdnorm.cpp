@@ -183,14 +183,14 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
 
     startt = std::chrono::high_resolution_clock::now();
     int64_t used{0};
-#pragma omp parallel for reduction(+ : used)
+    Eigen::Matrix<float, Eigen::Dynamic, 3> vf;
+#pragma omp parallel for private(vf) reduction(+ : used)
     for (size_t i = 0; i < boxType.size(); ++i) {
       if (boxType[i] == static_cast<unsigned char>(1) && boxEventIndex(i, 1) != 0) {
         ++used;
-        Eigen::Matrix<float, 2, 3> vi;
-        vi << boxExtents(i, 0), boxExtents(i, 1), boxExtents(i, 2), boxExtents(i, 3), boxExtents(i, 4),
-            boxExtents(i, 5);
-        const auto vf = vi * transforms3;
+        Eigen::Matrix<float, 2, 3> vi{{boxExtents(i, 0), boxExtents(i, 2), boxExtents(i, 4)},
+                                      {boxExtents(i, 1), boxExtents(i, 3), boxExtents(i, 5)}};
+        vf = vi * transforms3;
         int k = 0;
         for (const Eigen::Matrix3f &op : transforms2) {
           Eigen::Vector3i startIdx;
