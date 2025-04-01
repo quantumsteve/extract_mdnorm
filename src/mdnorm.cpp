@@ -38,8 +38,10 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
   using reg = axis::regular<float>;
 
   std::vector<float> hX, kX, lX;
+  std::array<int, 3> dims;
   {
     auto &axis = std::get<0>(params.axes);
+    dims[0] = axis.size();
     for (auto &&x : axis) {
       hX.push_back(x.lower());
     }
@@ -47,6 +49,7 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
   }
   {
     auto &axis = std::get<1>(params.axes);
+    dims[1] = axis.size();
     for (auto &&x : axis) {
       kX.push_back(x.lower());
     }
@@ -54,6 +57,7 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
   }
   {
     auto &axis = std::get<2>(params.axes);
+    dims[2] = axis.size();
     for (auto &&x : axis) {
       lX.push_back(x.lower());
     }
@@ -195,6 +199,7 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
         for (const Eigen::Matrix3f &op : transforms2) {
           Eigen::Vector3i startIdx;
           bool singleBox = true;
+          bool inBounds = true;
           for (int j = 0; j < 3; ++j) {
             startIdx[j] = h.axis(j).index(vf(0, k + j));
             const auto endIdx = h.axis(j).index(vf(1, k + j));
@@ -202,11 +207,17 @@ void mdnorm(parameters &params, histogram_type &signal, histogram_type& h) {
               singleBox = false;
               break;
             }
+            if ((startIdx[j] == -1 && endIdx == -1) || (startIdx[j] == dims[j] && endIdx == dims[j])) {
+              inBounds = false;
+              break;
+            }
           }
-          if (singleBox) {
-            h.at(startIdx[0], startIdx[1], startIdx[2]) += boxSignal[i];
-          } else {
-            binMD(op, events.block(boxEventIndex(i, 0), 0, boxEventIndex(i, 1), 3), h);
+          if (inBounds) {
+            if (singleBox) {
+              h.at(startIdx[0], startIdx[1], startIdx[2]) += boxSignal[i];
+            } else {
+              binMD(op, events.block(boxEventIndex(i, 0), 0, boxEventIndex(i, 1), 3), h);
+            }
           }
           k += 3;
         }
