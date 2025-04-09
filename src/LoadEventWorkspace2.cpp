@@ -65,7 +65,7 @@ void LoadEventWorkspace2::updateExtents(Eigen::Matrix<float, Eigen::Dynamic, 6> 
   status = H5Sclose(dataspace);
 }
 
-void LoadEventWorkspace2::updateSignal(std::vector<float> &signal) const {
+void LoadEventWorkspace2::updateSignal(std::vector<double> &signal) const {
   const char *DATASET = "MDEventWorkspace/box_structure/box_signal";
   hid_t dataset = H5Dopen(m_file, DATASET, H5P_DEFAULT);
 
@@ -75,7 +75,7 @@ void LoadEventWorkspace2::updateSignal(std::vector<float> &signal) const {
   auto status = H5Sget_simple_extent_dims(dataspace, dims_out.data(), nullptr);
 
   signal.resize(dims_out[0]);
-  status = H5Dread(dataset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, signal.data());
+  status = H5Dread(dataset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, signal.data());
 
   status = H5Dclose(dataset);
   status = H5Sclose(dataspace);

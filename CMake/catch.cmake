@@ -1,7 +1,7 @@
 # catch2
 set( catch2_url "https://github.com/catchorg/Catch2.git" )
 
-set( catch2_tag "v3.6.0" )
+set( catch2_tag "v3.8.1" )
 
 include (FetchContent)
 FetchContent_Declare(

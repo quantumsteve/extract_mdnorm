@@ -29,7 +29,7 @@ for run in range(40704,40726):
   signal_data = f['MDEventWorkspace']['box_structure']['box_signal_errorsquared']
   print(signal_data.shape, signal_data.dtype)
   #grp = g.create_group('MDEventWorkspace/event_data');
-  signal = grp.create_dataset("box_signal", (signal_data.shape[0],), dtype='float32', data=signal_data[:,0])
+  signal = grp.create_dataset("box_signal", data=signal_data[:, 0])
   #errorsquared = grp.create_dataset("box_errorsquared", (signal_data.shape[0],), dtype='float32', data=signal_data[:,1])
 
   index_data = f['MDEventWorkspace']['box_structure']['box_event_index']
